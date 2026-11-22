@@ -71,6 +71,11 @@ for (const [bn, br] of [['chromium', cr], ['webkit', wk]]) {
     const main = await p.locator('main').innerText()
     ok(`new crew: vvv + generated ${code}, no Denver blurb, creator only ${tag}`, (await p.locator('.crewcard__name').innerText()) === 'vvv' && /^VVV-[A-Z2-9]{4}$/.test(code) && !SAMPLE.test(main) && (await p.locator('[data-testid="crew-members"] .members__row').count()) === 1)
     if (bn === 'chromium') await p.screenshot({ path: `${OUT}/${PREFIX}-crew-vvv-${w}.png`, fullPage: true })
+    await act(p.getByTestId('nav-stats')); await settle(p, 900)
+    ok(`crew stats follows vvv: title, code, 1 of 1, Back to vvv ${tag}`, (await p.getByTestId('stats-crew').textContent()).startsWith('vvv') && (await p.getByTestId('crew-line').innerText()).includes(code) && (await p.getByTestId('wall-members').innerText()) === '1 of 1' && (await p.getByTestId('stats-back').innerText()) === 'Back to vvv' && !SAMPLE.test(await p.locator('main').innerText()))
+    if (bn === 'chromium') await p.screenshot({ path: `${OUT}/${PREFIX}-stats-vvv-${w}.png`, fullPage: true })
+    await act(p.getByTestId('stats-back')); await settle(p, 900)
+    ok(`stats back link returns to the vvv crew ${tag}`, new URL(p.url()).pathname === '/demo/crew' && (await p.locator('.crewcard__name').innerText()) === 'vvv')
     await act(p.getByTestId('invite-entry')); await settle(p, 1200)
     const link = `${BASE}/j/${code}?n=vvv`
     ok(`invite: akeru.app/j/${code}, copy code ${code}, Text link carries it ${tag}`, (await p.getByTestId('invite-link').innerText()) === `akeru.app/j/${code}` && (await p.getByTestId('copy-code').innerText()).trim() === code && decodeURIComponent((await p.getByTestId('share-sms').getAttribute('href')).split('body=')[1]).endsWith(link) && !SAMPLE.test(await p.locator('main').innerText()))

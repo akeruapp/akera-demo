@@ -5,6 +5,7 @@ import Screen from '../components/Screen.vue'
 import Avatar from '../components/Avatar.vue'
 import Badge from '../components/Badge.vue'
 import { PHOTOS, TEMPLATES, member } from '../data'
+import { state } from '../store'
 import { BADGES, MEMORIES, PROFILES, badge, earnedFor, isMember, memoryHref, rate } from '../stats'
 
 const route = useRoute()
@@ -22,7 +23,7 @@ const recent = computed(() => (p.value ? p.value.recent.map((t) => ({ t, mem: ME
       <div class="prof__head">
         <Avatar :id="p.id" :size="80" />
         <div>
-          <p class="kicker">{{ p.id === 'maya' ? 'You' : 'Gate C Crew' }}</p>
+          <p class="kicker">{{ p.id === 'maya' ? 'You' : (state.crew ? state.crewName : 'Gate C Crew') }}</p>
           <h1 class="title prof__name">{{ m.name }}</h1>
           <p class="prof__title" data-testid="title-badge"><Badge :id="p.titleBadge" :size="28" /> {{ p.title }}</p>
         </div>
