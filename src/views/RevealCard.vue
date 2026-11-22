@@ -24,12 +24,12 @@ function whoLabel(by: MemberId) {
 
 function share() {
   if (!canShare.value) return
-  router.push({ path: `/r/${slug.value}`, query: { from: 'crew' } })
+  router.push({ path: `/demo/r/${slug.value}`, query: { from: 'crew' } })
 }
 </script>
 
 <template>
-  <Screen :photo="t.revealPhoto" kicker="Aketa!" :caption="r.headline" back="/aketa" :step="5">
+  <Screen :photo="t.revealPhoto" kicker="Aketa!" :caption="r.headline" back="/demo/aketa" :step="5">
     <article class="reveal">
       <figure class="reveal__photo">
         <img :src="t.revealPhoto.src" :alt="t.revealPhoto.alt" :style="t.revealPhoto.focus ? { objectPosition: t.revealPhoto.focus } : undefined" />
@@ -87,7 +87,7 @@ function share() {
 
     <template #foot>
       <button type="button" class="btn btn--primary btn--block" :disabled="!canShare" aria-describedby="share-why" @click="share">Share reveal card</button>
-      <button type="button" class="btn btn--ghost btn--block" @click="router.push('/templates')">Keep it in the crew · lock another</button>
+      <button type="button" class="btn btn--ghost btn--block" @click="router.push('/demo/templates')">Keep it in the crew · lock another</button>
     </template>
   </Screen>
 </template>

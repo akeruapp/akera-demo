@@ -11,18 +11,29 @@ calls, no accounts, no analytics and no secrets. Every name, crew, flight and re
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:5173/aketa-demo/
 # or a production build:
-npm run build && npm run preview   # http://localhost:4173
+npm run build && npm run preview   # http://localhost:4173/aketa-demo/
 ```
 
 For the phone view, open the browser dev tools' device toolbar at 390 px wide.
+
+## Site structure
+
+- `/` is a minimal **coming-soon landing** (logo, teaser, "akeru.app · coming soon"). It has no link to the demo.
+- `/demo/...` is the clickable demo. Every `/demo` route, including deep links, shows a **passcode gate**
+  first. Only the SHA-256 hash of the passcode is in the source (`src/gate.ts`); the input is hashed with
+  `crypto.subtle` and compared. Unlocking lasts for the browser tab (`sessionStorage`). This is a light
+  client-side gate for a static demo, not real access control.
+- `/demo` pages get `<meta name="robots" content="noindex">` (set by the router); the landing does not.
+
+All demo routes below live under `/demo` (for example `/demo/r/x7k2`).
 
 ## The flow
 
 | Step | Route | What happens |
 | --- | --- | --- |
-| 1 Welcome | `/` | Brand moment, start the demo or jump to a shared reveal |
+| 1 Welcome | `/demo/` | Brand moment, start the demo or jump to a shared reveal |
 | 2 Crew | `/crew` | Start a crew (prefilled "Gate C Crew") or join with demo code **C7-GATE** (case and dash optional) |
 | 3 Template | `/templates` | First to land buys dinner (default), Match prediction, Charity run finish time, Sealed table note, Reunion time capsule, Road trip: who calls the first stop? |
 | 4 Lock | `/lock` | Maya Thompson makes her call; the other four are already sealed |
@@ -57,19 +68,18 @@ charity run template, so a visitor arriving with no prior state lands on a prefi
   to a mid-flow step without state sends you back to the start. `/r/*` always works on direct load.
 - Partner signals ("Landing confirmed via flight partner" etc.) are illustrative labels, not integrations.
 - Nothing is posted or copied when you share; the shared page is an in-app route.
-- Static hosting needs an SPA fallback to `index.html` for deep links (Vite's dev and preview servers do this).
+- Deep links rely on the `404.html` SPA fallback on GitHub Pages (Vite's dev and preview servers handle them natively).
 
-## Hosting status
+## Hosting
 
-The GitHub repository is **private** and **GitHub Pages is intentionally not enabled**. Nothing is deployed.
+Landing: https://macshivadi.github.io/aketa-demo/ · Demo (passcode): https://macshivadi.github.io/aketa-demo/demo/
 
-## Logo
+When the akeru.app domain is attached, change Vite `base` to `'/'` (site at akeru.app/, demo at akeru.app/demo/).
 
-`src/assets/akeru-mark.svg` is the Akeru mark: a lowercase "a" with a keyhole counter and a four-point
-sparkle, amber on a transparent background (the navy tile is only for icons). It's redrawn as geometric SVG
-from the chosen concept. `public/favicon.svg` is the mark on a navy rounded tile, and
-`public/apple-touch-icon.png` is the lockup with the cream "akeru" wordmark (regenerate with
-`node qa/make-icons.mjs`). The app header uses the mark plus the cream wordmark.
+Deployed by GitHub Actions (`.github/workflows/pages.yml`) on every push to `main`. The app is built with
+Vite `base: '/aketa-demo/'`, and `dist/index.html` is copied to `dist/404.html` so deep links such as
+`/aketa-demo/demo/r/x7k2` load directly. (GitHub Pages serves those deep links with an HTTP 404 status while
+rendering the app; that is expected for an SPA on Pages.)
 
 ## Stack
 
@@ -86,7 +96,8 @@ direct `/r/x7k2`, back navigation, keyboard, reduced motion, overflow, tap targe
 ```bash
 npm run build && npm run preview &
 npx playwright install chromium
-npm run qa            # screenshots and results.json in qa/out/
+npm run qa            # screenshots and results.json in qa/out/ (gate tests read AKERU_DEMO_PASSCODE)
+BASE=https://macshivadi.github.io/aketa-demo node qa/live.mjs   # quick live check
 ```
 
 ## Photo credits

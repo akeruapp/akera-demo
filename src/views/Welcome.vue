@@ -7,7 +7,7 @@ import { resetDemo } from '../store'
 const router = useRouter()
 function start() {
   resetDemo()
-  router.push('/crew')
+  router.push('/demo/crew')
 }
 </script>
 
@@ -32,9 +32,9 @@ function start() {
           Start the demo
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </button>
-        <RouterLink to="/r/x7k2" class="btn btn--ghost">See a shared reveal</RouterLink>
+        <RouterLink to="/demo/r/x7k2" class="btn btn--ghost">See a shared reveal</RouterLink>
       </div>
-      <RouterLink to="/partner/run" class="welcome__partner">See it from a partner app</RouterLink>
+      <RouterLink to="/demo/partner/run" class="welcome__partner">See it from a partner app</RouterLink>
       <p class="welcome__hint">A clickable walk-through of the flow with sample data. Not the native app.</p>
     </main>
     <p class="welcome__credit credit">Photo: {{ PHOTOS.couch.credit }} / Pexels</p>

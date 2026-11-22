@@ -37,7 +37,7 @@ export interface Photo {
 
 const P = (id: string, alt: string, credit: string, focus?: string): Photo => ({
   focus,
-  src: `/photos/pexels-${id}.jpg`,
+  src: `${import.meta.env.BASE_URL}photos/pexels-${id}.jpg`,
   alt,
   credit,
 })

@@ -52,7 +52,7 @@ function onTabKey(e: KeyboardEvent) {
 </script>
 
 <template>
-  <Screen :photo="PHOTOS.van" kicker="Your crew" caption="The people who’ll be there when it opens." back="/" :step="1">
+  <Screen :photo="PHOTOS.van" kicker="Your crew" caption="The people who’ll be there when it opens." back="/demo/" :step="1">
     <p class="kicker">Step 1 · Crew</p>
     <h1 class="title">Start a crew or join one</h1>
     <p class="lede">Crews are private. Only members see what’s locked inside.</p>
@@ -105,7 +105,7 @@ function onTabKey(e: KeyboardEvent) {
     </section>
 
     <template v-if="done" #foot>
-      <button type="button" class="btn btn--primary btn--block" @click="router.push('/templates')">Choose what to lock</button>
+      <button type="button" class="btn btn--primary btn--block" @click="router.push('/demo/templates')">Choose what to lock</button>
     </template>
   </Screen>
 </template>

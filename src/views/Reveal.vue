@@ -36,7 +36,7 @@ function skip() { timers.forEach((x) => window.clearTimeout(x)); phase.value = 3
 
 <template>
   <div class="aketa" :class="[`phase-${phase}`, { 'is-reduced': reduced }]">
-    <div class="aketa__bar"><TopBar back="/locked" /></div>
+    <div class="aketa__bar"><TopBar back="/demo/locked" /></div>
     <main class="aketa__stage" @click="phase < 3 && skip()">
       <div class="aketa__art" aria-hidden="true">
         <span class="aketa__ring aketa__ring--1" />
@@ -52,7 +52,7 @@ function skip() { timers.forEach((x) => window.clearTimeout(x)); phase.value = 3
       <p class="aketa__met" role="status">{{ phase >= 2 ? t.metAt : '' }}</p>
     </main>
     <div class="aketa__foot">
-      <button ref="cta" type="button" class="btn btn--primary btn--block" :tabindex="phase === 3 ? 0 : -1" :aria-hidden="phase < 3" @click="router.push('/reveal')">See everyone’s calls</button>
+      <button ref="cta" type="button" class="btn btn--primary btn--block" :tabindex="phase === 3 ? 0 : -1" :aria-hidden="phase < 3" @click="router.push('/demo/reveal')">See everyone’s calls</button>
       <button v-if="phase < 3" type="button" class="btn btn--ghost btn--sm aketa__skip" @click.stop="skip">Skip animation</button>
     </div>
   </div>

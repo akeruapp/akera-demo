@@ -13,7 +13,7 @@ const verticals = [
 </script>
 
 <template>
-  <Screen :photo="PHOTOS.run" kicker="For partners" caption="Your moment opens their story." back="/">
+  <Screen :photo="PHOTOS.run" kicker="For partners" caption="Your moment opens their story." back="/demo/">
     <p class="kicker">Partners · illustrative</p>
     <h1 class="title">Akeru inside your app</h1>
     <p class="lede">A partner adds one Akeru button where the moment happens, then sends a single yes/no signal when it’s over. Crews do the rest.</p>
@@ -41,7 +41,7 @@ const verticals = [
     </section>
 
     <template #foot>
-      <RouterLink to="/partner/run" class="btn btn--primary btn--block">See it from a partner app</RouterLink>
+      <RouterLink to="/demo/partner/run" class="btn btn--primary btn--block">See it from a partner app</RouterLink>
       <p class="foot__note">Partner types and labels are illustrative for this demo.</p>
     </template>
   </Screen>

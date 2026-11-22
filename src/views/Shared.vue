@@ -20,7 +20,7 @@ const crewName = computed(() => (fromCrew.value ? state.crewName : CREW.name))
 
 function runIt() {
   resetDemo(id.value)
-  router.push('/crew')
+  router.push('/demo/crew')
 }
 </script>
 

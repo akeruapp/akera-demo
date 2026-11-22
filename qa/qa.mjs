@@ -2,7 +2,8 @@
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 
-const BASE = process.env.BASE ?? 'http://localhost:4173'
+const BASE = (process.env.BASE ?? 'http://localhost:4173/aketa-demo').replace(/\/$/, '')
+const DEMO = BASE + '/demo'
 const OUT = process.env.OUT ?? 'qa/out'
 fs.mkdirSync(OUT, { recursive: true })
 const results = []
@@ -17,12 +18,14 @@ async function page(width, opts = {}) {
     hasTouch: width < 600,
     reducedMotion: opts.reduced ? 'reduce' : 'no-preference',
   })
+  // Flow tests start unlocked; the passcode gate itself is tested separately with the real code.
+  if (!opts.locked) await ctx.addInitScript(() => { try { sessionStorage.setItem('akeru.demo.unlocked', '1') } catch {} })
   const p = await ctx.newPage()
   p.errors = []
   p.external = []
   p.on('pageerror', (e) => p.errors.push(String(e)))
   p.on('console', (m) => { if (m.type() === 'error') p.errors.push(m.text()) })
-  p.on('request', (r) => { if (!r.url().startsWith(BASE) && !r.url().startsWith('data:')) p.external.push(r.url()) })
+  p.on('request', (r) => { if (!r.url().startsWith(new URL(BASE).origin) && !r.url().startsWith('data:')) p.external.push(r.url()) })
   return p
 }
 
@@ -84,7 +87,7 @@ const shot = async (p, name, full = true) => {
 for (const w of [390, 1280]) {
   const p = await page(w)
   const tag = `${w}`
-  await p.goto(BASE + '/')
+  await p.goto(DEMO + '/')
   await p.evaluate(() => document.fonts.ready)
   await shot(p, `01-welcome-${tag}`, false)
   await audit(p, `welcome@${w}`)
@@ -149,7 +152,7 @@ for (const w of [390, 1280]) {
   await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/lock')
   await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/templates')
   await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/crew')
-  await p.getByRole('button', { name: 'Back' }).click(); await nav(p, BASE + '/')
+  await p.getByRole('button', { name: 'Back' }).click(); await nav(p, DEMO + '/')
   ok(`back@${w}: in-app back walks to welcome`, true)
   ok(`errors@${w}: no console/page errors`, p.errors.length === 0, p.errors.join(' | '))
   ok(`network@${w}: no external requests`, p.external.length === 0, p.external.slice(0, 3).join(' '))
@@ -159,7 +162,7 @@ for (const w of [390, 1280]) {
 // ---------- direct load /r/x7k2 ----------
 for (const w of [390, 1280]) {
   const p = await page(w)
-  await p.goto(BASE + '/r/x7k2')
+  await p.goto(DEMO + '/r/x7k2')
   await p.evaluate(() => document.fonts.ready)
   ok(`direct /r/x7k2@${w}: canned reveal`, (await p.locator('h1').innerText()) === 'Dinner’s on Jake')
   ok(`direct /r/x7k2@${w}: roast consent shown`, await p.getByText('Jake is laughing too').isVisible())
@@ -178,7 +181,7 @@ for (const w of [390, 1280]) {
 // ---------- join path ----------
 {
   const p = await page(390)
-  await p.goto(BASE + '/')
+  await p.goto(DEMO + '/')
   await p.getByRole('button', { name: 'Start the demo' }).click()
   await p.getByRole('tab', { name: 'Join with a code' }).click()
   await p.getByLabel('Crew code').fill('ZZ-NOPE')
@@ -194,7 +197,7 @@ for (const w of [390, 1280]) {
 }
 {
   const p = await page(1280)
-  await p.goto(BASE + '/crew')
+  await p.goto(DEMO + '/crew')
   await p.getByRole('tab', { name: 'Join with a code' }).click()
   await p.getByRole('button', { name: 'C7-GATE' }).click()
   await p.getByRole('button', { name: 'Join crew' }).click()
@@ -216,7 +219,7 @@ for (const [id, e] of Object.entries(expect)) {
   for (const w of [390, 1280]) {
     const p = await page(w, { reduced: !e.named })
     const want = (legacy) => e.named || w === 390
-    await p.goto(BASE + '/crew')
+    await p.goto(DEMO + '/crew')
     await p.getByRole('button', { name: 'Create crew' }).click()
     await p.getByRole('button', { name: 'Choose what to lock' }).click()
     await nav(p, '**/templates')
@@ -260,11 +263,11 @@ for (const [id, e] of Object.entries(expect)) {
     await audit(p, `reveal ${id}@${w}`)
     await share.click()
     await nav(p, '**/r/**')
-    ok(`${id}@${w}: shared route ${new URL(p.url()).pathname}`, (await p.locator('h1').count()) === 1 && (!e.slug || new URL(p.url()).pathname === `/r/${e.slug}`))
+    ok(`${id}@${w}: shared route ${new URL(p.url()).pathname}`, (await p.locator('h1').count()) === 1 && (!e.slug || new URL(p.url()).pathname.endsWith(`/r/${e.slug}`)))
     if (want()) await shot(p, nm(id, e, 'shared', w, `08-shared-${id}-390`))
     if (e.slug) {
       const q = await page(w)
-      await q.goto(`${BASE}/r/${e.slug}`)
+      await q.goto(`${DEMO}/r/${e.slug}`)
       ok(`${id}@${w}: direct load /r/${e.slug}`, e.h1.test(await q.locator('h1').innerText()))
       if (e.roast) ok(`${id}@${w}: direct shared shows consent`, await q.getByText('Chris is laughing too').isVisible())
       await audit(q, `shared direct ${id}@${w}`)
@@ -280,7 +283,7 @@ for (const [id, e] of Object.entries(expect)) {
 // ---------- partner example (/partner/run) ----------
 for (const w of [390, 1280]) {
   const p = await page(w)
-  await p.goto(BASE + '/partner/run')
+  await p.goto(DEMO + '/partner/run')
   await p.evaluate(() => document.fonts.ready)
   ok(`partner@${w}: labeled partner example`, await p.getByText('Partner example', { exact: true }).isVisible())
   ok(`partner@${w}: fictional name Fieldstone Timing`, (await p.locator('.partner__brand').innerText()).includes('Fieldstone'))
@@ -295,7 +298,7 @@ for (const w of [390, 1280]) {
   // CTA from a clean session: lands on a prefilled lock screen (no redirect to welcome)
   await cta.click()
   await nav(p, '**/lock')
-  ok(`partner@${w}: CTA lands on /lock`, new URL(p.url()).pathname === '/lock')
+  ok(`partner@${w}: CTA lands on /lock`, new URL(p.url()).pathname.endsWith('/lock'))
   const st = await p.evaluate(() => JSON.parse(sessionStorage.getItem('akeru.demo.v1')))
   ok(`partner@${w}: run template + Gate C Crew seeded`, st.templateId === 'run' && st.crew && st.crewName === 'Gate C Crew' && st.fromPartner === true, JSON.stringify(st))
   ok(`partner@${w}: condition "Unlocks when everyone finishes"`, (await p.locator('[data-testid="lock-condition"]').innerText()).includes('Unlocks when everyone finishes'))
@@ -309,10 +312,10 @@ for (const w of [390, 1280]) {
   await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/partner/run')
   ok(`partner@${w}: back from lock returns to partner page`, true)
   // ready state
-  await p.goto(BASE + '/partner/run?aketa=ready')
+  await p.goto(DEMO + '/partner/run?aketa=ready')
   const banner = p.locator('[data-testid="aketa-ready"]')
   ok(`partner ready@${w}: banner visible`, await banner.isVisible() && (await banner.innerText()).includes('Your crew’s Aketa is ready'))
-  ok(`partner ready@${w}: banner links to /r/r10k`, (await banner.getAttribute('href')) === '/r/r10k')
+  ok(`partner ready@${w}: banner links to /r/r10k`, (await banner.getAttribute('href')).endsWith('/r/r10k'))
   await audit(p, `partner ready@${w}`)
   await p.waitForTimeout(300)
   await p.screenshot({ path: `${OUT}/09-partner-ready-${w}.png`, fullPage: true })
@@ -325,33 +328,80 @@ for (const w of [390, 1280]) {
 // entry links
 {
   const p = await page(390)
-  await p.goto(BASE + '/')
+  await p.goto(DEMO + '/')
   await p.getByRole('link', { name: 'See it from a partner app' }).click()
   await nav(p, '**/partner/run')
-  ok('entry: welcome link opens /partner/run', new URL(p.url()).pathname === '/partner/run')
-  await p.goto(BASE + '/crew')
+  ok('entry: welcome link opens /partner/run', new URL(p.url()).pathname.endsWith('/partner/run'))
+  await p.goto(DEMO + '/crew')
   await p.getByRole('button', { name: 'Create crew' }).click()
   await p.getByRole('button', { name: 'Choose what to lock' }).click(); await nav(p, '**/templates')
-  ok('entry: templates link points at /partner/run', (await p.getByRole('link', { name: 'See it from a partner app' }).getAttribute('href')) === '/partner/run')
+  ok('entry: templates link points at /partner/run', (await p.getByRole('link', { name: 'See it from a partner app' }).getAttribute('href')).endsWith('/partner/run'))
   // picking a template after a partner entry clears the partner condition
-  await p.goto(BASE + '/partner/run')
+  await p.goto(DEMO + '/partner/run')
   await p.getByRole('button', { name: /Lock a dare/ }).click(); await nav(p, '**/lock')
   await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/partner/run')
-  await p.goto(BASE + '/templates'); await nav(p, '**/templates')
+  await p.goto(DEMO + '/templates'); await nav(p, '**/templates')
   await p.locator('label.tpl:has(input[value="dinner"])').click()
   await p.getByRole('button', { name: /^Use / }).click(); await nav(p, '**/lock')
   ok('partner condition cleared after switching template', (await p.locator('[data-testid="lock-condition"]').count()) === 0)
   await p.context().close()
 }
+// ---------- landing + passcode gate ----------
+const PASSCODE = process.env.AKERU_DEMO_PASSCODE
+for (const w of [390, 1280]) {
+  const p = await page(w, { locked: true })
+  await p.goto(BASE + '/')
+  await p.evaluate(() => document.fonts.ready)
+  ok(`landing@${w}: open without passcode`, (await p.locator('.landing__word').innerText()) === 'akeru' && (await p.locator('.gate').count()) === 0)
+  ok(`landing@${w}: teaser + akeru.app coming soon`, (await p.locator('.landing__teaser').innerText()).includes('Open it together') && (await p.locator('.landing__soon').innerText()).includes('akeru.app'))
+  ok(`landing@${w}: no links at all (so no link to the demo)`, (await p.locator('a[href]').count()) === 0)
+  ok(`landing@${w}: no noindex`, (await p.locator('meta[name="robots"]').count()) === 0)
+  await audit(p, `landing@${w}`)
+  await p.waitForTimeout(500)
+  await p.screenshot({ path: `${OUT}/13-landing-${w}.png` })
+  await p.goto(DEMO + '/r/x7k2')
+  await p.waitForTimeout(300)
+  ok(`gate@${w}: /demo deep link shows the gate first`, (await p.locator('h1').innerText()) === 'Enter passcode' && new URL(p.url()).pathname.endsWith('/demo/r/x7k2'))
+  ok(`gate@${w}: noindex on /demo`, (await p.locator('meta[name="robots"]').getAttribute('content')) === 'noindex')
+  await audit(p, `gate@${w}`)
+  await p.waitForTimeout(500)
+  await p.screenshot({ path: `${OUT}/13-gate-${w}.png` })
+  await p.getByLabel('Passcode').fill('definitely-wrong-000')
+  await p.getByRole('button', { name: 'Open the preview' }).click()
+  await p.waitForTimeout(300)
+  ok(`gate@${w}: wrong code shows friendly error`, (await p.locator('#gate-msg').innerText()).includes('didn’t open') && (await p.getByLabel('Passcode').inputValue()) === '')
+  ok(`gate@${w}: still gated after wrong code`, (await p.locator('.gate').count()) === 1)
+  await p.screenshot({ path: `${OUT}/13-gate-error-${w}.png` })
+  if (!PASSCODE) {
+    ok(`gate@${w}: correct code unlocks`, false, 'passcode env var not set')
+  } else {
+    await p.getByLabel('Passcode').fill(PASSCODE)
+    await p.getByRole('button', { name: 'Open the preview' }).click()
+    await p.locator('.gate').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {})
+    await p.waitForTimeout(300)
+    ok(`gate@${w}: correct code unlocks the intended deep link`, (await p.locator('h1').innerText()) === 'Dinner’s on Jake' && new URL(p.url()).pathname.endsWith('/demo/r/x7k2'))
+    await p.goto(DEMO + '/partner/run'); await p.waitForTimeout(300)
+    ok(`gate@${w}: later /demo load in the same tab stays unlocked`, (await p.locator('.gate').count()) === 0 && (await p.locator('.partner__time').innerText()) === '50:12')
+    await p.goto(DEMO + '/'); await p.waitForTimeout(300)
+    ok(`gate@${w}: /demo/ welcome unlocked`, (await p.locator('.welcome').count()) === 1)
+    const tab2 = await p.context().newPage()
+    await tab2.goto(DEMO + '/partner/run'); await tab2.waitForTimeout(300)
+    ok(`gate@${w}: a new tab asks again (sessionStorage)`, (await tab2.locator('h1').innerText()) === 'Enter passcode')
+    await tab2.close()
+  }
+  ok(`errors gate@${w}`, p.errors.length === 0, p.errors.length ? 'page errors' : '')
+  await p.context().close()
+}
+
 // logo: mark in header + welcome, icons served
 for (const w of [390, 1280]) {
   const p = await page(w)
-  await p.goto(BASE + '/')
+  await p.goto(DEMO + '/')
   await p.evaluate(() => document.fonts.ready)
   ok(`logo@${w}: welcome shows the mark (header + hero)`, (await p.locator('.welcome svg.mark').count()) === 2)
   await p.waitForTimeout(300)
   await p.screenshot({ path: `${OUT}/_logo-welcome-${w}.png` })
-  await p.goto(BASE + '/crew'); await p.waitForTimeout(400)
+  await p.goto(DEMO + '/crew'); await p.waitForTimeout(400)
   ok(`logo@${w}: app header shows mark + akeru`, (await p.locator('.topbar .wordmark svg.mark').count()) === 1 && (await p.locator('.topbar .wordmark').innerText()).trim() === 'akeru')
   await p.screenshot({ path: `${OUT}/_logo-header-${w}.png`, clip: { x: 0, y: 0, width: w, height: 80 } })
   for (const u of ['/favicon.svg', '/apple-touch-icon.png']) {
@@ -365,7 +415,7 @@ for (const w of [390, 1280]) {
 // /partners integrate page
 for (const w of [390, 1280]) {
   const p = await page(w)
-  await p.goto(BASE + '/partners')
+  await p.goto(DEMO + '/partners')
   ok(`/partners@${w}: loads`, (await p.locator('h1').innerText()) === 'Akeru inside your app')
   await audit(p, `/partners@${w}`)
   await shot(p, `10-partners-${w}`)
@@ -378,7 +428,7 @@ for (const w of [390, 1280]) {
 // ---------- reduced motion ----------
 for (const w of [390, 1280]) {
   const p = await page(w, { reduced: true })
-  await p.goto(BASE + '/crew')
+  await p.goto(DEMO + '/crew')
   await p.getByRole('button', { name: 'Create crew' }).click()
   await p.getByRole('button', { name: 'Choose what to lock' }).click()
   await p.getByRole('button', { name: /^Use / }).click()
@@ -401,7 +451,7 @@ for (const w of [390, 1280]) {
 // ---------- keyboard ----------
 {
   const p = await page(1280)
-  await p.goto(BASE + '/')
+  await p.goto(DEMO + '/')
   const seen = []
   for (let i = 0; i < 6; i++) {
     await p.keyboard.press('Tab')
@@ -472,7 +522,7 @@ for (const [n, a, b, min] of pairs) ok(`contrast ${n}`, cr(a, b) >= min, cr(a, b
 // text over the welcome photo: sample the darkest-case background behind each text block
 for (const w of [390, 1280]) {
   const p = await page(w)
-  await p.goto(BASE + '/')
+  await p.goto(DEMO + '/')
   await p.evaluate(() => document.fonts.ready)
   await p.waitForTimeout(300)
   const boxes = await p.evaluate(() => [...document.querySelectorAll('.welcome__kicker, .welcome__title, .welcome__tagline, .welcome__line, .welcome__hint, .welcome__credit, .demo-tag, .welcome__partner')].map((el) => {

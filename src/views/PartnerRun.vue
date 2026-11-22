@@ -18,7 +18,7 @@ const splits = [
 
 function lockDare() {
   startFromPartner()
-  router.push('/lock')
+  router.push('/demo/lock')
 }
 </script>
 
@@ -27,7 +27,7 @@ function lockDare() {
     <p class="partner__ribbon">
       <span class="partner__ribbon-tag">Partner example</span>
       A fictional race-timing app, showing how Akeru appears inside a partner’s app.
-      <RouterLink to="/partners" class="partner__ribbon-link">How partners connect</RouterLink>
+      <RouterLink to="/demo/partners" class="partner__ribbon-link">How partners connect</RouterLink>
     </p>
 
     <div class="partner__app">
@@ -40,7 +40,7 @@ function lockDare() {
       </header>
 
       <main class="partner__main">
-        <RouterLink v-if="ready" :to="`/r/${SHARE_SLUGS.run}`" class="partner__ready" data-testid="aketa-ready">
+        <RouterLink v-if="ready" :to="`/demo/r/${SHARE_SLUGS.run}`" class="partner__ready" data-testid="aketa-ready">
           <span class="partner__ready-icon" aria-hidden="true"><Sparkle :size="20" /></span>
           <span class="partner__ready-text">
             <strong>Your crew’s Aketa is ready</strong>
@@ -88,6 +88,6 @@ function lockDare() {
       </main>
     </div>
 
-    <p class="partner__back"><RouterLink to="/">Back to the Akeru demo</RouterLink></p>
+    <p class="partner__back"><RouterLink to="/demo/">Back to the Akeru demo</RouterLink></p>
   </div>
 </template>

@@ -38,12 +38,12 @@ function seal() {
   if (!valid.value || sealing.value) return
   sealing.value = true
   lockCall(value.value)
-  window.setTimeout(() => router.push('/locked'), prefersReducedMotion() ? 0 : 520)
+  window.setTimeout(() => router.push('/demo/locked'), prefersReducedMotion() ? 0 : 520)
 }
 </script>
 
 <template>
-  <Screen :photo="t.photo" band kicker="Lock your call" :caption="partner ? PARTNER.condition : t.name" :back="partner ? '/partner/run' : '/templates'" :step="3">
+  <Screen :photo="t.photo" band kicker="Lock your call" :caption="partner ? PARTNER.condition : t.name" :back="partner ? '/demo/partner/run' : '/demo/templates'" :step="3">
     <p class="kicker">Step 3 · {{ t.name }}</p>
     <h1 class="title">{{ partner ? PARTNER.question : t.question }}</h1>
     <p class="lede">{{ partner ? PARTNER.hint : t.hint }}</p>

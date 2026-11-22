@@ -38,7 +38,7 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
 </script>
 
 <template>
-  <Screen :photo="t.photo" kicker="Locked" :caption="cond" back="/lock" :step="4">
+  <Screen :photo="t.photo" kicker="Locked" :caption="cond" back="/demo/lock" :step="4">
     <div class="lockhero">
       <Orbit class="lockhero__orbit" :w="248" :h="88" :at="0.08" :spark="14" />
       <span class="lockhero__lock"><LockGlyph :size="72" /></span>
@@ -74,7 +74,7 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
     </ul>
 
     <template #foot>
-      <button type="button" class="btn btn--secondary btn--block" @click="router.push('/aketa')">
+      <button type="button" class="btn btn--secondary btn--block" @click="router.push('/demo/aketa')">
         <Sparkle :size="16" /> Simulate unlock
       </button>
       <p class="foot__note">Demo control. In the app, the partner signal opens it for everyone at once.</p>

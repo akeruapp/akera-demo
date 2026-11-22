@@ -625,3 +625,49 @@ h1:focus-visible, [data-focus-start]:focus-visible { outline: none; }
 .pverts__ex { grid-column: 1 / -1; color: var(--cream-3); font-size: 13px; line-height: 20px; }
 .privacy p { margin-top: 8px; color: var(--cream-2); }
 .privacy .card__label { display: flex; align-items: center; gap: 8px; }
+
+/* ---------- coming-soon landing ---------- */
+.landing {
+  position: relative; min-height: 100dvh; overflow: hidden; display: grid; place-items: center;
+  padding: calc(48px + var(--safe-t)) calc(24px + var(--safe-r)) calc(48px + var(--safe-b)) calc(24px + var(--safe-l));
+  background: radial-gradient(ellipse 70% 55% at 50% 45%, #1C2742, var(--ink) 72%);
+}
+.landing__orbit { position: absolute; pointer-events: none; opacity: .4; }
+.landing__orbit--a { left: 50%; top: 50%; transform: translate(-30%, -62%); }
+.landing__orbit--b { left: 50%; top: 50%; transform: translate(-78%, -22%); opacity: .25; }
+.landing__spark { position: absolute; }
+.landing__spark--1 { left: 14%; top: 18%; opacity: .8; }
+.landing__spark--2 { right: 16%; bottom: 20%; opacity: .7; }
+.landing__main { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 560px; }
+.landing__mark { filter: drop-shadow(0 16px 40px rgba(244,163,92,.22)); }
+.landing__word { margin-top: 16px; font: 600 64px/72px var(--font-title); color: var(--cream); letter-spacing: -0.03em; }
+.landing__kicker { display: flex; gap: 12px; margin-top: 8px; font: 400 15px/24px var(--font-jp); letter-spacing: .24em; color: var(--cream-2); }
+.landing__kicker .dot, .landing__soon .dot { color: var(--amber); letter-spacing: 0; }
+.landing__teaser { margin-top: 32px; font: 600 24px/32px var(--font-title); color: var(--amber); text-wrap: balance; max-width: 18ch; }
+.landing__soon {
+  display: inline-flex; gap: 8px; align-items: center; margin-top: 32px; padding: 8px 16px; border-radius: 999px;
+  font-size: 14px; line-height: 24px; font-weight: 500; color: var(--cream); box-shadow: inset 0 0 0 1px var(--amber-line); background: rgba(18,26,44,.6);
+}
+.landing__domain { font-weight: 700; }
+@media (min-width: 960px) {
+  .landing__word { font-size: 96px; line-height: 104px; }
+  .landing__teaser { font-size: 32px; line-height: 40px; max-width: none; }
+  .landing__mark { width: 144px; height: 144px; }
+  .landing__spark--1 { left: 22%; top: 24%; }
+  .landing__spark--2 { right: 24%; bottom: 22%; }
+}
+
+/* ---------- passcode gate ---------- */
+.gate {
+  position: relative; min-height: 100dvh; overflow: hidden; display: grid; place-items: center;
+  padding: calc(48px + var(--safe-t)) calc(24px + var(--safe-r)) calc(48px + var(--safe-b)) calc(24px + var(--safe-l));
+  background: radial-gradient(ellipse 70% 55% at 50% 40%, #1C2742, var(--ink) 72%);
+}
+.gate__orbit { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -78%); opacity: .28; pointer-events: none; }
+.gate__main { position: relative; width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.gate__word { margin-top: 8px; font: 600 24px/32px var(--font-title); color: var(--cream); }
+.gate__title { margin-top: 32px; font: 600 32px/40px var(--font-title); color: var(--amber); }
+.gate__lede { margin-top: 8px; color: var(--cream-2); }
+.gate__form { width: 100%; margin-top: 32px; text-align: left; display: grid; gap: 8px; }
+.gate__form .field__msg { min-height: 20px; margin-top: 0 !important; }
+.gate__form .btn { margin-top: 8px; }

@@ -15,7 +15,7 @@ function choose(id: TemplateId) { pickTemplate(id) }
 </script>
 
 <template>
-  <Screen :photo="current.photo" kicker="Template" :caption="current.name" back="/crew" :step="2">
+  <Screen :photo="current.photo" kicker="Template" :caption="current.name" back="/demo/crew" :step="2">
     <p class="kicker">Step 2 · {{ state.crewName }}</p>
     <h1 class="title">What are you locking?</h1>
     <p class="lede">Pick a template. Each one opens on a real-world moment.</p>
@@ -33,10 +33,10 @@ function choose(id: TemplateId) { pickTemplate(id) }
         <span class="tpl__check" aria-hidden="true"><Sparkle :size="16" color="var(--ink)" /></span>
       </label>
     </fieldset>
-    <p class="tpls__partner"><RouterLink to="/partner/run">See it from a partner app</RouterLink></p>
+    <p class="tpls__partner"><RouterLink to="/demo/partner/run">See it from a partner app</RouterLink></p>
 
     <template #foot>
-      <button type="button" class="btn btn--primary btn--block" @click="router.push('/lock')">Use “{{ current.name }}”</button>
+      <button type="button" class="btn btn--primary btn--block" @click="router.push('/demo/lock')">Use “{{ current.name }}”</button>
     </template>
   </Screen>
 </template>
