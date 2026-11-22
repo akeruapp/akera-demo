@@ -5,6 +5,14 @@ import Welcome from './views/Welcome.vue'
 import Crew from './views/Crew.vue'
 import Templates from './views/Templates.vue'
 import Lock from './views/Lock.vue'
+import Create from './views/Create.vue'
+import Invite from './views/Invite.vue'
+import Join from './views/Join.vue'
+import FirstLock from './views/FirstLock.vue'
+import Faq from './views/Faq.vue'
+import Stats from './views/Stats.vue'
+import Profile from './views/Profile.vue'
+import Soon from './views/Soon.vue'
 import Locked from './views/Locked.vue'
 import Reveal from './views/Reveal.vue'
 import RevealCard from './views/RevealCard.vue'
@@ -25,6 +33,15 @@ export const router = createRouter({
     { path: '/demo', name: 'welcome', component: Welcome, meta: { title: 'Akeru · Lock it. Live it. Relive it.' } },
     { path: '/demo/crew', name: 'crew', component: Crew, meta: { title: 'Your crew · Akeru' } },
     { path: '/demo/templates', name: 'templates', component: Templates, meta: { needs: 'crew', title: 'Pick a template · Akeru' } },
+    { path: '/demo/create', name: 'create', component: Create, meta: { needs: 'crew', title: 'Create your own template · Akeru' } },
+    { path: '/demo/invite', name: 'invite', component: Invite, meta: { needs: 'crew', title: 'Invite your crew · Akeru' } },
+    { path: '/demo/j/:code', name: 'join', component: Join, meta: { title: 'Join a crew · Akeru' } },
+    { path: '/demo/first', name: 'first', component: FirstLock, meta: { needs: 'crew', title: 'Your first call · Akeru' } },
+    { path: '/demo/faq', name: 'faq', component: Faq, meta: { title: 'FAQ · Akeru' } },
+    { path: '/demo/stats', name: 'stats', component: Stats, meta: { title: 'Crew stats · Akeru' } },
+    { path: '/demo/u/:name', name: 'profile', component: Profile, meta: { title: 'Crew profile · Akeru' } },
+    { path: '/demo/soon', name: 'soon', component: Soon, meta: { title: 'Coming soon · Akeru' } },
+    { path: '/j/:code', redirect: (to) => `/demo/j/${encodeURIComponent(String(to.params.code))}` },
     { path: '/demo/lock', name: 'lock', component: Lock, meta: { needs: 'template', title: 'Lock your call · Akeru' } },
     { path: '/demo/locked', name: 'locked', component: Locked, meta: { needs: 'locked', title: 'Locked · Akeru' } },
     { path: '/demo/aketa', name: 'aketa', component: Reveal, meta: { needs: 'locked', title: 'Aketa! · Akeru' } },
@@ -51,7 +68,7 @@ router.beforeEach((to) => {
   return true
 })
 
-export const isDemoPath = (path: string) => path === '/demo' || path.startsWith('/demo/')
+export const isDemoPath = (path: string) => path === '/demo' || path.startsWith('/demo/') || path.startsWith('/j/')
 
 router.afterEach((to) => {
   document.title = to.meta.title

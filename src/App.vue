@@ -20,11 +20,12 @@ async function focusStart() {
   }
 }
 
-let first = true
-router.afterEach(() => {
-  if (first) { first = false; return }
-  focusStart()
-})
+// Move focus to the new screen's heading once the page transition has swapped it in
+// (with out-in, the old screen is still mounted right after navigation).
+// The very first navigation (page load) keeps the browser's default focus.
+let navs = 0
+router.afterEach(() => { navs++ })
+function onEnter() { if (navs > 1) focusStart() }
 
 function onUnlocked() {
   unlocked.value = true
@@ -36,7 +37,7 @@ function onUnlocked() {
 <template>
   <Gate v-if="gated" @unlocked="onUnlocked" />
   <RouterView v-else v-slot="{ Component, route: r }">
-    <Transition name="page" mode="out-in">
+    <Transition name="page" mode="out-in" @after-enter="onEnter">
       <component :is="Component" :key="r.path" />
     </Transition>
   </RouterView>

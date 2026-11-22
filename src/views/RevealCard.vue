@@ -3,9 +3,11 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Screen from '../components/Screen.vue'
 import Avatar from '../components/Avatar.vue'
+import AvatarLink from '../components/AvatarLink.vue'
+import PastRuns from '../components/PastRuns.vue'
 import Sparkle from '../components/Sparkle.vue'
-import { SHARE_SLUGS, buildReveal, member, template } from '../data'
-import type { MemberId } from '../data'
+import { buildReveal, member, slugFor, template } from '../data'
+import type { BuiltinId, MemberId } from '../data'
 import { state } from '../store'
 
 const router = useRouter()
@@ -13,7 +15,7 @@ const t = computed(() => template(state.templateId!))
 const r = computed(() => buildReveal(t.value, state.myCall ?? t.value.defaultCall))
 const target = computed(() => (r.value.roast ? member(r.value.roast.target) : null))
 const canShare = computed(() => !r.value.roast || state.consent)
-const slug = computed(() => SHARE_SLUGS[t.value.id])
+const slug = computed(() => slugFor(t.value))
 
 function whoLabel(by: MemberId) {
   const n = by === 'maya' ? 'You' : member(by).first
@@ -43,7 +45,7 @@ function share() {
         <h2 id="calls-h" class="card__label">Everyone’s calls</h2>
         <ul class="calls" :class="{ 'calls--notes': t.kind === 'note' }">
           <li v-for="row in r.rows" :key="row.by" class="calls__row" :class="{ 'is-hi': row.highlight }">
-            <Avatar :id="row.by" :size="40" />
+            <AvatarLink :id="row.by" :size="40" />
             <div class="calls__body">
               <p class="calls__who">{{ whoLabel(row.by) }}
                 <span v-if="row.badge" class="badge"><Sparkle :size="10" color="var(--ink)" />{{ row.badge }}</span>
@@ -53,6 +55,11 @@ function share() {
             </div>
           </li>
         </ul>
+      </section>
+
+      <section v-if="r.funBit" class="card funbit" aria-labelledby="fun-h">
+        <h2 id="fun-h" class="card__label">{{ r.funBit.label }}</h2>
+        <p class="funbit__text">{{ r.funBit.text }}</p>
       </section>
 
       <section v-if="r.roast && target" class="card roast" aria-labelledby="roast-h">
@@ -83,6 +90,7 @@ function share() {
           <template v-else>Waiting on {{ target?.first }}’s “I’m laughing too”</template>
         </p>
       </section>
+      <PastRuns v-if="!t.slug" :template="(t.id as BuiltinId)" />
     </article>
 
     <template #foot>

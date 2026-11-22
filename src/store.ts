@@ -1,6 +1,7 @@
 import { reactive, watch } from 'vue'
 import type { TemplateId } from './data'
-import { CREW, template } from './data'
+import { CREW, findTemplate, template } from './data'
+import './custom'
 
 export interface DemoState {
   crew: 'created' | 'joined' | null
@@ -26,7 +27,7 @@ function load(): DemoState {
     const v = JSON.parse(raw) as Partial<DemoState>
     const s = fresh()
     if (v.crew === 'created' || v.crew === 'joined') s.crew = v.crew
-    if (v.templateId && ['dinner', 'match', 'run', 'note', 'reunion', 'roadtrip'].includes(v.templateId)) s.templateId = v.templateId
+    if (v.templateId && findTemplate(v.templateId)) s.templateId = v.templateId
     if (typeof v.crewName === 'string' && v.crewName.trim()) s.crewName = v.crewName.slice(0, 40)
     if (typeof v.myCall === 'string') s.myCall = v.myCall
     if (typeof v.lockedAt === 'number') s.lockedAt = v.lockedAt
@@ -80,3 +81,14 @@ export function resetDemo(keepTemplate?: TemplateId) {
 
 export const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+/** "Run it with your crew": start the lock flow for a template with Gate C Crew, fresh. */
+export function runTemplate(id: TemplateId) {
+  if (!state.crew) { state.crew = 'joined'; state.crewName = CREW.name }
+  state.templateId = id
+  state.myCall = template(id).defaultCall
+  state.lockedAt = null
+  state.revealSeen = false
+  state.consent = false
+  state.fromPartner = false
+}

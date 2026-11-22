@@ -59,6 +59,24 @@ brand), labeled "Partner example" at the top. Its Akeru button seeds the demo cr
 charity run template, so a visitor arriving with no prior state lands on a prefilled `/lock` with the condition
 "Unlocks when everyone finishes". The partner only sends a yes/no signal and never sees what anyone wrote.
 
+### More demo screens
+
+All behind the passcode gate, all `noindex`, none linked from the landing at `/`.
+
+| Screen | Route | Notes |
+|---|---|---|
+| Create your own template | `/demo/create` | From the “Create your own” card on `/demo/templates`. Four steps (question, answer type, unlock, fun bit + name/emoji), preview, optional “Publish for other crews” (lists it in this tab’s templates). Custom templates run the normal lock → reveal → share flow and get a `/demo/r/u-xxxx` card. Stored in `sessionStorage` only. |
+| Invite your crew | `/demo/invite` | From the crew screen. Shows `akeru.app/j/C7-GATE`, a QR code drawn locally (qrcode-generator, no network), copy link/code, native share when available, Text (`sms:`) and WhatsApp (`wa.me`) links. Nothing is sent. |
+| Join landing | `/demo/j/C7-GATE`, `/j/C7-GATE` | One-tap Join, no sign-up. Unknown codes get a friendly error. Members already in the crew aren’t asked to join again. |
+| First lock | `/demo/first` | Where Join goes: “Who’s late to the gate?”, one tap to pick, one tap to lock, sealed state with countdown and the real “Locked in Ns” time. |
+| Crew stats | `/demo/stats` | Called-it numbers, 8 inline-SVG badges (earned / not yet), opt-in badge share card, crew wall, memories timeline linking to the reveal cards. |
+| Profiles | `/demo/u/maya`, `jake`, `chris`, `sam`, `riley` | Linked from avatars on the crew, invite, stats and reveal screens. Positive stats only. |
+| Past runs | on every `/demo/r/...` card and `/demo/reveal` | 2–3 earlier runs, who called it, and “Run it with your crew”. |
+| FAQ | `/demo/faq` | Accessible accordion. |
+| Coming soon | `/demo/soon` | Planned / Exploring cards; the feedback button is only a `mailto:` link. |
+
+The app top bar has a “More” menu (Crew stats, FAQ, Coming soon); the welcome footer links FAQ and Coming soon.
+
 ### Demo limitations (deliberate)
 
 - Locking a dare from the partner page uses the charity run template; its reveal is the canned Riverside 10K

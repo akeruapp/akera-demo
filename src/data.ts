@@ -26,7 +26,8 @@ export const CREW = {
   blurb: 'Five friends, four cities, one long weekend in Denver.',
 }
 
-export type TemplateId = 'dinner' | 'match' | 'run' | 'note' | 'reunion' | 'roadtrip'
+export type BuiltinId = 'dinner' | 'match' | 'run' | 'note' | 'reunion' | 'roadtrip'
+export type TemplateId = BuiltinId | `u-${string}`
 
 export interface Photo {
   src: string
@@ -55,7 +56,7 @@ export const PHOTOS = {
   run: P('34089572', 'A volunteer handing water to a runner during a city race', 'K'),
 }
 
-export type CallKind = 'pick' | 'score' | 'time' | 'note'
+export type CallKind = 'pick' | 'score' | 'time' | 'note' | 'number' | 'yesno' | 'clock'
 
 export interface CrewCall {
   by: MemberId
@@ -84,6 +85,13 @@ export interface Template {
   noteLabel?: string // note kind: what the note is
   sealedUntil?: string // note kind: helper text under the textarea
   suggestions?: string[] // note kind: one-tap ideas
+  // custom templates (built in /demo/create)
+  slug?: string
+  emoji?: string
+  published?: boolean
+  hostOpens?: boolean // unlock = host taps "Open now"
+  formatCall?: (v: string) => string
+  reveal?: (myCall: string) => Reveal
 }
 
 export const TEMPLATES: Template[] = [
@@ -248,7 +256,15 @@ export const PARTNER = {
   locked: 'Everyone finishes via Fieldstone Timing',
 }
 
-export const template = (id: TemplateId): Template => TEMPLATES.find((t) => t.id === id)!
+// Custom templates live in src/custom.ts and register a lookup here (avoids an import cycle).
+let customLookup: (id: string) => Template | undefined = () => undefined
+let customSlugLookup: (slug: string) => TemplateId | null = () => null
+export function registerCustomLookup(byId: typeof customLookup, bySlug: typeof customSlugLookup) {
+  customLookup = byId
+  customSlugLookup = bySlug
+}
+export const findTemplate = (id: string): Template | undefined => TEMPLATES.find((t) => t.id === id) ?? customLookup(id)
+export const template = (id: TemplateId): Template => findTemplate(id) ?? TEMPLATES[0]
 
 export const NOTE_SUGGESTIONS = [
   'Riley, you made this city feel like home my first year here. Happy birthday.',
@@ -272,6 +288,7 @@ export interface Reveal {
   summary: string
   rows: RevealRow[]
   roast?: { target: MemberId; text: string; consequence: string }
+  funBit?: { label: string; text: string }
 }
 
 const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
@@ -282,6 +299,7 @@ export const parseTime = (v: string): number => {
 }
 
 export function buildReveal(t: Template, myCall: string): Reveal {
+  if (t.reveal) return t.reveal(myCall)
   if (t.id === 'dinner') {
     const pickName = myCall === 'maya' ? 'Me' : member(myCall as MemberId).first
     const calledIt = myCall === 'jake'
@@ -409,7 +427,7 @@ export function buildReveal(t: Template, myCall: string): Reveal {
 }
 
 // The canned public reveal at /r/x7k2 (the default dinner path, consent given).
-export const SHARE_SLUGS: Record<TemplateId, string> = {
+export const SHARE_SLUGS: Record<BuiltinId, string> = {
   dinner: 'x7k2',
   match: 'm4h2',
   run: 'r10k',
@@ -419,4 +437,6 @@ export const SHARE_SLUGS: Record<TemplateId, string> = {
 }
 
 export const templateForSlug = (slug: string): TemplateId | null =>
-  (Object.keys(SHARE_SLUGS) as TemplateId[]).find((k) => SHARE_SLUGS[k] === slug) ?? null
+  (Object.keys(SHARE_SLUGS) as BuiltinId[]).find((k) => SHARE_SLUGS[k] === slug) ?? customSlugLookup(slug)
+
+export const slugFor = (t: Template): string => t.slug ?? SHARE_SLUGS[t.id as BuiltinId]

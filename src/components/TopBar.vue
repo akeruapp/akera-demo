@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import Mark from './Mark.vue'
+import NavMenu from './NavMenu.vue'
 const props = defineProps<{ back?: string; step?: number; total?: number }>()
 const router = useRouter()
 function goBack() {
@@ -22,6 +23,7 @@ function goBack() {
         </span>
       </p>
       <slot />
+      <NavMenu />
     </div>
   </header>
 </template>

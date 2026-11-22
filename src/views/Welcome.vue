@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import Mark from '../components/Mark.vue'
+import NavMenu from '../components/NavMenu.vue'
 import { PHOTOS } from '../data'
 import { resetDemo } from '../store'
 
@@ -17,7 +18,7 @@ function start() {
     <div class="welcome__scrim" aria-hidden="true" />
     <header class="welcome__bar">
       <span class="wordmark"><Mark :size="24" />akeru</span>
-      <span class="demo-tag">Clickable demo</span>
+      <span class="welcome__barend"><NavMenu /><span class="demo-tag">Clickable demo</span></span>
     </header>
     <main class="welcome__body">
       <Mark class="welcome__mark" :size="72" />
@@ -37,6 +38,12 @@ function start() {
       <RouterLink to="/demo/partner/run" class="welcome__partner">See it from a partner app</RouterLink>
       <p class="welcome__hint">A clickable walk-through of the flow with sample data. Not the native app.</p>
     </main>
-    <p class="welcome__credit credit">Photo: {{ PHOTOS.couch.credit }} / Pexels</p>
+    <footer class="welcome__foot">
+      <nav class="welcome__footlinks" aria-label="More">
+        <RouterLink to="/demo/faq" data-testid="foot-faq">FAQ</RouterLink>
+        <RouterLink to="/demo/soon" data-testid="foot-soon">Coming soon</RouterLink>
+      </nav>
+      <p class="welcome__credit credit">Photo: {{ PHOTOS.couch.credit }} / Pexels</p>
+    </footer>
   </div>
 </template>

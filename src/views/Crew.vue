@@ -2,9 +2,12 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Screen from '../components/Screen.vue'
-import Avatar from '../components/Avatar.vue'
+import AvatarLink from '../components/AvatarLink.vue'
 import { CREW, MEMBERS, PHOTOS } from '../data'
 import { state } from '../store'
+import LockGlyph from '../components/LockGlyph.vue'
+import Badge from '../components/Badge.vue'
+import { FIRST_LOCK, firstLock } from '../firstlock'
 
 const router = useRouter()
 const mode = ref<'create' | 'join'>(state.crew === 'joined' ? 'join' : 'create')
@@ -95,16 +98,33 @@ function onTabKey(e: KeyboardEvent) {
         </div>
         <ul class="members" aria-label="Crew members">
           <li v-for="m in MEMBERS" :key="m.id" class="members__row">
-            <Avatar :id="m.id" />
+            <AvatarLink :id="m.id" />
             <span class="members__name">{{ m.name }}</span>
             <span v-if="m.id === 'maya'" class="tag">You</span>
             <span v-else class="members__status">{{ state.crew === 'created' ? 'Joined via invite' : 'Member' }}</span>
           </li>
         </ul>
       </div>
+      <RouterLink v-if="done" to="/demo/stats" class="card firstcard" data-testid="crew-stats">
+        <span class="firstcard__badge" aria-hidden="true"><Badge id="oracle" :size="40" /></span>
+        <span class="firstcard__text">
+          <span class="card__label">Crew stats</span>
+          <span class="firstcard__q">Badges, streaks and memories</span>
+        </span>
+        <span class="tpl__go firstcard__go" aria-hidden="true">›</span>
+      </RouterLink>
+      <RouterLink v-if="done && firstLock.lockedAt" to="/demo/first" class="card firstcard" data-testid="crew-firstlock">
+        <span class="seal__lock" aria-hidden="true"><LockGlyph :size="32" /></span>
+        <span class="firstcard__text">
+          <span class="card__label">Your first call · locked</span>
+          <span class="firstcard__q">{{ FIRST_LOCK.question }}</span>
+        </span>
+        <span class="tpl__go firstcard__go" aria-hidden="true">›</span>
+      </RouterLink>
     </section>
 
     <template v-if="done" #foot>
+      <button type="button" class="btn btn--secondary btn--block" data-testid="invite-entry" @click="router.push('/demo/invite')">Invite your crew</button>
       <button type="button" class="btn btn--primary btn--block" @click="router.push('/demo/templates')">Choose what to lock</button>
     </template>
   </Screen>

@@ -19,6 +19,9 @@ const hawks = ref(h0)
 const comets = ref(c0)
 const secs = ref(parseTime(t.value.kind === 'time' ? (state.myCall ?? t.value.defaultCall) : '51:00'))
 const note = ref(t.value.kind === 'note' ? (state.myCall ?? t.value.defaultCall) : '')
+const num = ref(t.value.kind === 'number' ? Number(state.myCall ?? t.value.defaultCall) || 0 : 0)
+const yn = ref(t.value.kind === 'yesno' ? (state.myCall ?? t.value.defaultCall) : 'Yes')
+const clockVal = ref(t.value.kind === 'clock' ? (state.myCall ?? t.value.defaultCall) : '20:00')
 const sealing = ref(false)
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
@@ -29,6 +32,9 @@ const value = computed(() => {
     case 'pick': return pick.value
     case 'score': return `${hawks.value}-${comets.value}`
     case 'time': return fmt(secs.value)
+    case 'number': return String(clamp(Math.round(num.value || 0), 0, 999))
+    case 'yesno': return yn.value
+    case 'clock': return /^\d{2}:\d{2}$/.test(clockVal.value) ? clockVal.value : ''
     default: return note.value.trim()
   }
 })
@@ -85,6 +91,30 @@ function seal() {
           <button type="button" class="iconbtn iconbtn--ring" aria-label="15 seconds slower" @click="secs = clamp(secs + 15, 40 * 60, 70 * 60)">+</button>
         </div>
         <p class="muted small">Between 40:00 and 70:00, in 15-second steps.</p>
+      </div>
+
+      <div v-else-if="t.kind === 'number'" class="numpick">
+        <button type="button" class="iconbtn iconbtn--ring" aria-label="One less" @click="num = clamp((num || 0) - 1, 0, 999)">−</button>
+        <label class="numpick__field">
+          <span class="visually-hidden">Your number</span>
+          <input v-model.number="num" class="input numpick__input" type="number" inputmode="numeric" min="0" max="999" />
+        </label>
+        <button type="button" class="iconbtn iconbtn--ring" aria-label="One more" @click="num = clamp((num || 0) + 1, 0, 999)">+</button>
+      </div>
+
+      <fieldset v-else-if="t.kind === 'yesno'" class="yesno">
+        <legend class="visually-hidden">{{ t.question }}</legend>
+        <label v-for="o in ['Yes', 'No']" :key="o" class="yesno__opt" :class="{ 'is-on': yn === o }">
+          <input v-model="yn" type="radio" name="yesno" class="visually-hidden" :value="o" />
+          {{ o }}
+        </label>
+      </fieldset>
+
+      <div v-else-if="t.kind === 'clock'" class="stack">
+        <label class="field">
+          <span class="field__label">Your time</span>
+          <input v-model="clockVal" class="input clockpick" type="time" step="300" />
+        </label>
       </div>
 
       <div v-else class="stack">

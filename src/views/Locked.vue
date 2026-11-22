@@ -21,6 +21,7 @@ const myCallLabel = computed(() => {
     return h === k ? `${h}–${k} draw` : h > k ? `Hawks ${h}–${k}` : `Comets ${k}–${h}`
   }
   if (t.value.kind === 'note') return t.value.noteLabel ?? 'Your note'
+  if (t.value.formatCall) return t.value.formatCall(c)
   return c
 })
 
@@ -48,7 +49,7 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
     <h1 class="title center">Locked in. Five of five.</h1>
     <p class="lede center">Your call: <strong class="amber">{{ myCallLabel }}</strong>. It stays sealed for everyone until real life delivers.</p>
 
-    <section class="card countdown" aria-labelledby="cd-label">
+    <section v-if="t.countdownSec > 0" class="card countdown" aria-labelledby="cd-label">
       <h2 id="cd-label" class="card__label">{{ t.waitingFor }}</h2>
       <p class="countdown__clock" :aria-label="spoken">
         <span>{{ parts[0] }}</span><span class="countdown__sep" aria-hidden="true">:</span><span>{{ parts[1] }}</span><span class="countdown__sep" aria-hidden="true">:</span><span>{{ parts[2] }}</span>
@@ -62,7 +63,7 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
         <h2 id="cond-label" class="card__label">Unlocks when</h2>
         <p class="condition__text">{{ cond }}</p>
         <p class="condition__status"><span class="dot-live" aria-hidden="true" /> Waiting for the signal</p>
-        <p class="muted small">Illustrative partner label for this demo.</p>
+        <p class="muted small">{{ t.hostOpens ? 'Only the host can open it.' : 'Illustrative label for this demo.' }}</p>
       </div>
     </section>
 
@@ -74,10 +75,18 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
     </ul>
 
     <template #foot>
-      <button type="button" class="btn btn--secondary btn--block" @click="router.push('/demo/aketa')">
-        <Sparkle :size="16" /> Simulate unlock
-      </button>
-      <p class="foot__note">Demo control. In the app, the partner signal opens it for everyone at once.</p>
+      <template v-if="t.hostOpens">
+        <button type="button" class="btn btn--primary btn--block" @click="router.push('/demo/aketa')">
+          <Sparkle :size="16" color="var(--ink)" /> Open now
+        </button>
+        <p class="foot__note">You’re the host. Opening it opens everyone’s call at once.</p>
+      </template>
+      <template v-else>
+        <button type="button" class="btn btn--secondary btn--block" @click="router.push('/demo/aketa')">
+          <Sparkle :size="16" /> Simulate unlock
+        </button>
+        <p class="foot__note">Demo control. In the app, {{ t.slug ? 'the condition' : 'the partner signal' }} opens it for everyone at once.</p>
+      </template>
     </template>
   </Screen>
 </template>
