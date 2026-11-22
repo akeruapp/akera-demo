@@ -24,10 +24,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Vite base is '/aketa-demo/' for the github.io URL; switch it to '/' in vite.config.ts when akeru.app is attached.
       - run: npm run build
-      - name: SPA fallback for deep links
-        run: cp dist/index.html dist/404.html
+      - name: SPA fallback for deep links and custom domain
+        run: |
+          cp dist/index.html dist/404.html
+          echo 'akeru.app' > dist/CNAME
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

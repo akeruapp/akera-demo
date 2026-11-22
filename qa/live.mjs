@@ -1,10 +1,11 @@
 // Quick live check against the deployed site.
-// Usage: BASE=https://macshivadi.github.io/aketa-demo node qa/live.mjs   (passcode read from AKERU_DEMO_PASSCODE, never printed)
+// Usage: BASE=https://akeru.app node qa/live.mjs   (passcode read from AKERU_DEMO_PASSCODE, never printed)
 import { chromium } from 'playwright'
 import fs from 'node:fs'
-const BASE = (process.env.BASE ?? 'https://macshivadi.github.io/aketa-demo').replace(/\/$/, '')
+const BASE = (process.env.BASE ?? 'https://akeru.app').replace(/\/$/, '')
 const DEMO = BASE + '/demo'
 const OUT = process.env.OUT ?? 'qa/out-live'
+const PREFIX = process.env.PREFIX ?? '14-akeru'
 const PASSCODE = process.env.AKERU_DEMO_PASSCODE
 fs.mkdirSync(OUT, { recursive: true })
 let pass = 0, fail = 0
@@ -21,7 +22,7 @@ const demoRoutes = [
   ['reunion', '/r/c4ps', async (p) => (await h1(p)).includes('Ten years')],
   ['roadtrip', '/r/m0ab', async (p) => (await h1(p)).includes('Chris called the first stop')],
 ]
-const shots = { demo: '13-live-demo', x7k2: '13-live-x7k2', partner: '13-live-partner' }
+const shots = { demo: `${PREFIX}-demo`, x7k2: `${PREFIX}-x7k2`, partner: `${PREFIX}-partner`, partners: `${PREFIX}-partners` }
 
 const b = await chromium.launch()
 for (const w of [390, 1280]) {
@@ -38,15 +39,23 @@ for (const w of [390, 1280]) {
   ok(`landing@${w}: no link to the demo (no links at all)`, (await p.locator('a[href]').count()) === 0 && !(await p.content()).includes('/demo"'))
   ok(`landing@${w}: no noindex`, (await p.locator('meta[name="robots"]').count()) === 0)
   ok(`landing@${w}: no gate`, (await p.locator('.gate').count()) === 0)
-  await p.screenshot({ path: `${OUT}/13-live-landing-${w}.png` })
+  await p.screenshot({ path: `${OUT}/${PREFIX}-landing-${w}.png` })
   await p.reload({ waitUntil: 'networkidle' }); await settle(p)
   ok(`landing@${w}: renders after refresh`, await landingOk())
 
+  // gate on /demo/ itself (fresh tab, locked)
+  {
+    const g = await ctx.newPage()
+    await g.goto(DEMO + '/', { waitUntil: 'networkidle' }); await settle(g)
+    ok(`gate@${w}: /demo/ shows the gate first`, (await h1(g)) === 'Enter passcode')
+    await g.close()
+  }
   // gate on a deep link
   await p.goto(DEMO + '/partner/run', { waitUntil: 'networkidle' }); await settle(p)
   ok(`gate@${w}: /demo/partner/run deep link shows the gate`, (await h1(p)) === 'Enter passcode' && new URL(p.url()).pathname.endsWith('/demo/partner/run'))
   ok(`gate@${w}: noindex on /demo`, (await p.locator('meta[name="robots"]').getAttribute('content')) === 'noindex')
-  await p.screenshot({ path: `${OUT}/13-gate-${w}.png` })
+  await p.waitForTimeout(400)
+  await p.screenshot({ path: `${OUT}/${PREFIX}-gate-${w}.png` })
   await p.getByLabel('Passcode').fill('definitely-wrong-000')
   await p.getByRole('button', { name: 'Open the preview' }).click(); await settle(p)
   ok(`gate@${w}: wrong code shows friendly error`, (await p.locator('#gate-msg').innerText()).includes('didn’t open'))
@@ -86,6 +95,17 @@ for (const w of [390, 1280]) {
   }
   ok(`no failed sub-requests@${w}`, bad.length === 0, bad.slice(0, 3).join(' | '))
   ok(`no page errors@${w}`, errors.length === 0, errors.length ? 'page errors' : '')
+  await ctx.close()
+}
+// redirects
+for (const [from, label] of (process.env.REDIRECTS ?? 'https://www.akeru.app/|www,https://macshivadi.github.io/aketa-demo/|github.io').split(',').map((x) => x.split('|'))) {
+  const ctx = await b.newContext()
+  const p = await ctx.newPage()
+  try {
+    await p.goto(from, { waitUntil: 'networkidle', timeout: 30000 })
+    const u = new URL(p.url())
+    ok(`redirect ${label}: ${from} -> ${p.url()}`, u.protocol === 'https:' && u.host === new URL(BASE).host && (await p.locator('.landing__word').count()) === 1)
+  } catch (e) { ok(`redirect ${label}: ${from}`, false, String(e).split('\n')[0]) }
   await ctx.close()
 }
 await b.close()

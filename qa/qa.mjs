@@ -2,7 +2,7 @@
 import { chromium } from 'playwright'
 import fs from 'node:fs'
 
-const BASE = (process.env.BASE ?? 'http://localhost:4173/aketa-demo').replace(/\/$/, '')
+const BASE = (process.env.BASE ?? 'http://localhost:4173').replace(/\/$/, '')
 const DEMO = BASE + '/demo'
 const OUT = process.env.OUT ?? 'qa/out'
 fs.mkdirSync(OUT, { recursive: true })

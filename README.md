@@ -11,9 +11,9 @@ calls, no accounts, no analytics and no secrets. Every name, crew, flight and re
 
 ```bash
 npm install
-npm run dev          # http://localhost:5173/aketa-demo/
+npm run dev          # http://localhost:5173/
 # or a production build:
-npm run build && npm run preview   # http://localhost:4173/aketa-demo/
+npm run build && npm run preview   # http://localhost:4173/
 ```
 
 For the phone view, open the browser dev tools' device toolbar at 390 px wide.
@@ -72,14 +72,19 @@ charity run template, so a visitor arriving with no prior state lands on a prefi
 
 ## Hosting
 
-Landing: https://macshivadi.github.io/aketa-demo/ · Demo (passcode): https://macshivadi.github.io/aketa-demo/demo/
+Landing: https://akeru.app/ · Demo (passcode): https://akeru.app/demo/
 
-When the akeru.app domain is attached, change Vite `base` to `'/'` (site at akeru.app/, demo at akeru.app/demo/).
+Deployed by GitHub Actions (`.github/workflows/pages.yml`) on every push to `main`, on the akeru.app custom
+domain (the workflow writes `dist/CNAME`). Vite `base` is `'/'`, and `dist/index.html` is copied to
+`dist/404.html` so deep links such as `/demo/r/x7k2` load directly. (GitHub Pages serves those deep links with
+an HTTP 404 status while rendering the app; that is expected for an SPA on Pages.)
 
-Deployed by GitHub Actions (`.github/workflows/pages.yml`) on every push to `main`. The app is built with
-Vite `base: '/aketa-demo/'`, and `dist/index.html` is copied to `dist/404.html` so deep links such as
-`/aketa-demo/demo/r/x7k2` load directly. (GitHub Pages serves those deep links with an HTTP 404 status while
-rendering the app; that is expected for an SPA on Pages.)
+## Logo
+
+`src/assets/akeru-mark.svg` is the Akeru mark: a lowercase "a" with a keyhole counter and a four-point
+sparkle, amber on a transparent background (the navy tile is only for icons), redrawn as geometric SVG from
+the chosen concept. `public/favicon.svg` is the mark on a navy rounded tile, and `public/apple-touch-icon.png`
+is the lockup with the cream "akeru" wordmark (regenerate with `node qa/make-icons.mjs`).
 
 ## Stack
 
@@ -97,7 +102,7 @@ direct `/r/x7k2`, back navigation, keyboard, reduced motion, overflow, tap targe
 npm run build && npm run preview &
 npx playwright install chromium
 npm run qa            # screenshots and results.json in qa/out/ (gate tests read AKERU_DEMO_PASSCODE)
-BASE=https://macshivadi.github.io/aketa-demo node qa/live.mjs   # quick live check
+BASE=https://akeru.app node qa/live.mjs   # quick live check
 ```
 
 ## Photo credits
