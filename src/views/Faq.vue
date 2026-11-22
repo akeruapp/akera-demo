@@ -9,7 +9,7 @@ const FAQS: { q: string; a: string; lang?: boolean }[] = [
   { q: 'What can unlock it?', a: 'A time, an event result, a partner signal, or everyone choosing to open it.' },
   { q: 'Who sees my locks?', a: 'Only your crew.' },
   { q: 'Can a reveal be shared?', a: 'Only if you opt in. A roast leaves the crew only if the person being roasted taps “I’m laughing too”.' },
-  { q: 'Is there betting or money?', a: 'No. There’s no real-money betting. Stakes are things like tacos, a playlist or a dare.' },
+  { q: 'Is there any money involved?', a: 'No. Akeru never handles money. A crew might joke that the loser buys dinner, but that’s just part of the fun.' },
   { q: 'What are templates, and can I make my own?', a: 'Templates are starting points for a lock. And yes, you can create your own in the demo.' },
   { q: 'How do I invite friends?', a: 'Share a link, a QR code or your crew code. Friends join with one tap, no sign-up.' },
   { q: 'What do partners see?', a: 'Partners only send a yes or no signal, like “the match ended”. No personal data.' },

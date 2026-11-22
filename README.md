@@ -47,7 +47,7 @@ All demo routes below live under `/demo` (for example `/demo/r/x7k2`).
 
 Positive by design: roasts are friendly, and the roasted friend holds the share key. On the dinner, match and road trip
 reveals, **Share** stays disabled until the "I'm laughing too" switch is on (in the demo, Maya taps it on
-Jake's or Chris's behalf, and it is labeled as a demo control). No money, no betting language, no shaming.
+Jake's or Chris's behalf, and it is labeled as a demo control). No money, no cash stakes, no shaming: it’s all “call it” language.
 
 Shared routes: `/r/x7k2` (dinner, the canned reveal from the deck), plus `/r/m4h2` (match), `/r/r10k` (run)
 `/r/n5t3` (table note), `/r/c4ps` (reunion time capsule) and `/r/m0ab` (road trip). Direct loads always show the canned reveal; arriving from the flow shows your own call.

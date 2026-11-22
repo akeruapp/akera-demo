@@ -53,8 +53,8 @@ export const FUN_KINDS: { value: FunKind; label: string; placeholder: string }[]
 ]
 export const EMOJIS = ['🎉', '💍', '🌮', '✈️', '🏃', '🎂', '🎬', '⚽', '🏕️', '⭐']
 
-// No money framing: stakes are tacos and playlists, not cash.
-const MONEY = /(\$|€|£|\bdollars?\b|\bbucks\b|\bcash\b|\bmoney\b|\bvenmo\b|\bpaypal\b|\bzelle\b|\bbet(s|ting)?\b|\bwager\b|\bgambl)/i
+// No cash: stakes are tacos and playlists. Catches currency symbols, cash words and payment apps.
+const MONEY = /(\$|€|£|¥|\b\d+\s*(usd|eur|gbp)\b|\bdollars?\b|\bbucks\b|\bcash\b|\bmoney\b|\bvenmo\b|\bpaypal\b|\bzelle\b|\bcash\s?app\b)/i
 export const looksLikeMoney = (s: string) => MONEY.test(s)
 
 const KEY = 'akeru.demo.custom.v1'

@@ -38,7 +38,7 @@ function validate(n: number): Record<string, string> {
   if (n === 4) {
     if (d.fun !== 'none') {
       if (!d.funText.trim()) e.funText = `Write the ${fun.value.label.replace(/^An? /, '').toLowerCase()}, or pick “Nothing extra”.`
-      else if (d.fun !== 'roast' && looksLikeMoney(d.funText)) e.funText = 'Keep it playful: no money or bets. Try tacos, a playlist or a dare.'
+      else if (d.fun !== 'roast' && looksLikeMoney(d.funText)) e.funText = 'Keep it playful: no cash amounts. Try tacos, a playlist or a dare.'
       else if (d.fun === 'roast' && looksLikeMoney(d.funText)) e.funText = 'Keep the roast about the moment, not money.'
     }
     if (!d.name.trim()) e.name = 'Give your template a name.'
@@ -176,7 +176,7 @@ function startOver() { custom.draft = newDraft(); Object.assign(d, newDraft()); 
             <span class="field__label">{{ fun.label.replace(/^An? /, '').replace(/^./, (c) => c.toUpperCase()) }}</span>
             <input v-model="d.funText" class="input" type="text" maxlength="100" :placeholder="fun.placeholder" :aria-invalid="!!errors.funText" aria-describedby="f-msg" data-testid="fun" />
           </label>
-          <p id="f-msg" class="field__msg" :class="{ 'is-error': errors.funText }" role="status" aria-live="polite">{{ errors.funText || (d.fun === 'roast' ? `Only leaves the crew if ${MEMBERS.find((m) => m.id === d.roastTarget)!.first} is laughing too.` : 'Playful stakes only. No money.') }}</p>
+          <p id="f-msg" class="field__msg" :class="{ 'is-error': errors.funText }" role="status" aria-live="polite">{{ errors.funText || (d.fun === 'roast' ? `Only leaves the crew if ${MEMBERS.find((m) => m.id === d.roastTarget)!.first} is laughing too.` : 'Playful stakes only. No cash amounts.') }}</p>
         </template>
 
         <label class="field">
