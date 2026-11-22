@@ -20,7 +20,7 @@ const EXPLORING: { icon: Icon; text: string }[] = [
   { icon: 'calendar', text: 'Calendar-linked unlocks' },
   { icon: 'lang', text: 'Multi-language crews: Spanish, French, Portuguese' },
 ]
-const MAILTO = `mailto:?subject=${encodeURIComponent('Akeru idea')}&body=${encodeURIComponent('Here’s what I’d want in Akeru:\n\n')}`
+const MAILTO = `mailto:contact@akeru.app?subject=${encodeURIComponent('Akeru idea')}&body=${encodeURIComponent('Here’s what I’d want in Akeru:\n\n')}`
 </script>
 
 <template>

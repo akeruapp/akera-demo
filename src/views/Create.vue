@@ -196,7 +196,7 @@ function startOver() { custom.draft = newDraft(); Object.assign(d, newDraft()); 
 
       <!-- 5. preview -->
       <div v-else class="stack">
-        <p class="lede">This is how it shows up for Gate C Crew.</p>
+        <p class="lede">This is how it shows up for {{ state.crewName }}.</p>
         <article class="card preview" data-testid="preview">
           <div class="preview__head">
             <span class="preview__emoji" aria-hidden="true">{{ d.emoji }}</span>

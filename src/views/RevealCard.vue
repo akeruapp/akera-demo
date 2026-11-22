@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import CrewLine from '../components/CrewLine.vue'
 import Screen from '../components/Screen.vue'
 import Avatar from '../components/Avatar.vue'
 import AvatarLink from '../components/AvatarLink.vue'
@@ -38,6 +39,7 @@ function share() {
         <figcaption class="reveal__stamp"><Sparkle :size="16" /> Aketa!</figcaption>
       </figure>
       <p class="kicker">{{ r.kicker }} · {{ t.metAt.split(' · ').slice(-1)[0] }}</p>
+      <CrewLine />
       <h1 class="title">{{ r.headline }}</h1>
       <p class="lede">{{ r.summary }}</p>
 

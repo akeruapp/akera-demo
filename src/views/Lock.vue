@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import CrewLine from '../components/CrewLine.vue'
 import Screen from '../components/Screen.vue'
 import Avatar from '../components/Avatar.vue'
 import LockGlyph from '../components/LockGlyph.vue'
@@ -51,6 +52,7 @@ function seal() {
 <template>
   <Screen :photo="t.photo" band kicker="Lock your call" :caption="partner ? PARTNER.condition : t.name" :back="partner ? '/demo/partner/run' : '/demo/templates'" :step="3">
     <p class="kicker">Step 3 · {{ t.name }}</p>
+    <CrewLine />
     <h1 class="title">{{ partner ? PARTNER.question : t.question }}</h1>
     <p class="lede">{{ partner ? PARTNER.hint : t.hint }}</p>
     <p v-if="partner" class="condchip" data-testid="lock-condition">

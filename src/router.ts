@@ -41,7 +41,7 @@ export const router = createRouter({
     { path: '/demo/stats', name: 'stats', component: Stats, meta: { title: 'Crew stats · Akeru' } },
     { path: '/demo/u/:name', name: 'profile', component: Profile, meta: { title: 'Crew profile · Akeru' } },
     { path: '/demo/soon', name: 'soon', component: Soon, meta: { title: 'Coming soon · Akeru' } },
-    { path: '/j/:code', redirect: (to) => `/demo/j/${encodeURIComponent(String(to.params.code))}` },
+    { path: '/j/:code', redirect: (to) => ({ path: `/demo/j/${encodeURIComponent(String(to.params.code))}`, query: to.query }) },
     { path: '/demo/lock', name: 'lock', component: Lock, meta: { needs: 'template', title: 'Lock your call · Akeru' } },
     { path: '/demo/locked', name: 'locked', component: Locked, meta: { needs: 'locked', title: 'Locked · Akeru' } },
     { path: '/demo/aketa', name: 'aketa', component: Reveal, meta: { needs: 'locked', title: 'Aketa! · Akeru' } },

@@ -34,7 +34,7 @@ All demo routes below live under `/demo` (for example `/demo/r/x7k2`).
 | Step | Route | What happens |
 | --- | --- | --- |
 | 1 Welcome | `/demo/` | Brand moment, start the demo or jump to a shared reveal |
-| 2 Crew | `/crew` | Start a crew (prefilled "Gate C Crew") or join with demo code **C7-GATE** (case and dash optional) |
+| 2 Crew | `/crew` | Start your own crew (name, optional code, optional blurb; the code is generated from the name, e.g. `VVV-K3P9`, if left blank; only you until you invite) or join the sample crew with demo code **C7-GATE** (case and dash optional) |
 | 3 Template | `/templates` | First to land buys dinner (default), Match prediction, Charity run finish time, Sealed table note, Reunion time capsule, Road trip: who calls the first stop? |
 | 4 Lock | `/lock` | Maya Thompson makes her call; the other four are already sealed |
 | 5 Locked | `/locked` | Countdown plus an illustrative partner condition, and a secondary **Simulate unlock** demo control |
@@ -66,16 +66,18 @@ All behind the passcode gate, all `noindex`, none linked from the landing at `/`
 | Screen | Route | Notes |
 |---|---|---|
 | Create your own template | `/demo/create` | From the “Create your own” card on `/demo/templates`. Four steps (question, answer type, unlock, fun bit + name/emoji), preview, optional “Publish for other crews” (lists it in this tab’s templates). Custom templates run the normal lock → reveal → share flow and get a `/demo/r/u-xxxx` card. Stored in `sessionStorage` only. |
-| Invite your crew | `/demo/invite` | From the crew screen. Shows `akeru.app/j/C7-GATE`, a QR code drawn locally (qrcode-generator, no network), copy link/code, native share when available, Text (`sms:`) and WhatsApp (`wa.me`) links. Nothing is sent. |
+| Invite your crew | `/demo/invite` | From the crew screen. Shows `akeru.app/j/{your code}` (`C7-GATE` for the sample crew), a QR code drawn locally (qrcode-generator, no network), copy link/code, native share when available, Text (`sms:`) and WhatsApp (`wa.me`) links. Nothing is sent. |
 | Join landing | `/demo/j/C7-GATE`, `/j/C7-GATE` | One-tap Join, no sign-up. Unknown codes get a friendly error. Members already in the crew aren’t asked to join again. |
 | First lock | `/demo/first` | Where Join goes: “Who’s late to the gate?”, one tap to pick, one tap to lock, sealed state with countdown and the real “Locked in Ns” time. |
 | Crew stats | `/demo/stats` | Called-it numbers, 8 inline-SVG badges (earned / not yet), opt-in badge share card, crew wall, memories timeline linking to the reveal cards. |
 | Profiles | `/demo/u/maya`, `jake`, `chris`, `sam`, `riley` | Linked from avatars on the crew, invite, stats and reveal screens. Positive stats only. |
 | Past runs | on every `/demo/r/...` card and `/demo/reveal` | 2–3 earlier runs, who called it, and “Run it with your crew”. |
 | FAQ | `/demo/faq` | Accessible accordion. |
-| Coming soon | `/demo/soon` | Planned / Exploring cards; the feedback button is only a `mailto:` link. |
+| Coming soon | `/demo/soon` | Planned / Exploring cards; the feedback button is only a `mailto:contact@akeru.app` link (nothing is sent by the page). |
 
-The app top bar has a “More” menu (Crew stats, FAQ, Coming soon); the welcome footer links FAQ and Coming soon.
+Navigation is plain links, no dropdown, same at every width: the top bar has Crew stats; the footer (welcome and every app screen) has FAQ and Coming soon. Templates and “Create your own” stay on the “Choose what to lock” screen.
+
+A crew you start keeps its own name and code on the crew card, invite (link, QR, Text/WhatsApp, copy code), `/j/{code}` and `/demo/j/{code}`, first lock, lock, locked and reveal. Its invite link carries the crew name (`/j/VVV-K3P9?n=vvv`) so it opens in a fresh tab without a backend. Gate C Crew / C7-GATE is only used when you join the sample (or start from the partner app / a past-runs “Run it with your crew” with no crew yet).
 
 ### Demo limitations (deliberate)
 

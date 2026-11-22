@@ -2,6 +2,7 @@
 import type { Photo } from '../data'
 import TopBar from './TopBar.vue'
 import Orbit from './Orbit.vue'
+import AppFoot from './AppFoot.vue'
 
 withDefaults(defineProps<{
   photo?: Photo
@@ -37,6 +38,7 @@ withDefaults(defineProps<{
       <div v-if="$slots.foot" class="screen__foot">
         <slot name="foot" />
       </div>
+      <AppFoot />
     </div>
   </div>
 </template>

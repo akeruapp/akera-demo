@@ -3,20 +3,23 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Screen from '../components/Screen.vue'
 import AvatarLink from '../components/AvatarLink.vue'
-import { CREW, MEMBERS, PHOTOS } from '../data'
-import { state } from '../store'
+import { CREW, PHOTOS } from '../data'
+import { cleanCode, codeFor, crewMembers, isSampleCode, normalizeCode as normalize, seedSample, startCrew, state } from '../store'
 import LockGlyph from '../components/LockGlyph.vue'
 import Badge from '../components/Badge.vue'
 import { FIRST_LOCK, firstLock } from '../firstlock'
 
 const router = useRouter()
 const mode = ref<'create' | 'join'>(state.crew === 'joined' ? 'join' : 'create')
-const name = ref(state.crewName || CREW.name)
-const code = ref(state.crew === 'joined' ? CREW.code : '')
+// A new crew starts blank: no sample name, code, blurb or members carried over from Gate C Crew.
+const name = ref(state.crewCustom ? state.crewName : '')
+const myCode = ref(state.crewCustom ? state.crewCode : '')
+const blurb = ref(state.crewCustom ? state.crewBlurb : '')
+const code = ref(state.crew === 'joined' ? state.crewCode : '')
 const error = ref('')
+const codeError = ref('')
 const done = computed(() => state.crew !== null)
-
-const normalize = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')
+const members = computed(() => crewMembers())
 
 function setMode(m: 'create' | 'join') {
   if (mode.value === m) return
@@ -27,14 +30,23 @@ function setMode(m: 'create' | 'join') {
 
 function create() {
   const n = name.value.trim()
-  if (!n) { error.value = 'Give your crew a name first.'; return }
-  error.value = ''
-  state.crewName = n.slice(0, 40)
-  state.crew = 'created'
+  error.value = n ? '' : 'Give your crew a name first.'
+  codeError.value = ''
+  let c = ''
+  if (myCode.value.trim()) {
+    c = cleanCode(myCode.value)
+    if (!c) codeError.value = 'Use 4 to 12 letters or numbers (a hyphen is fine), or leave it blank and we’ll make one.'
+    else if (isSampleCode(c)) codeError.value = `${CREW.code} belongs to the sample crew. Pick another, or leave it blank.`
+  }
+  if (error.value || codeError.value) return
+  startCrew(n, c || codeFor(n), blurb.value)
 }
 
 function join() {
-  if (normalize(code.value) !== normalize(CREW.code)) {
+  if (state.crewCustom && normalize(code.value) && normalize(code.value) === normalize(state.crewCode)) {
+    error.value = ''; state.crew = 'joined'; return
+  }
+  if (!isSampleCode(code.value)) {
     error.value = code.value.trim()
       ? `We couldn’t find “${code.value.trim()}”. In this demo, try ${CREW.code}.`
       : `Enter a crew code. In this demo, try ${CREW.code}.`
@@ -42,8 +54,7 @@ function join() {
   }
   error.value = ''
   code.value = CREW.code
-  state.crewName = CREW.name
-  state.crew = 'joined'
+  seedSample('joined')
 }
 
 function onTabKey(e: KeyboardEvent) {
@@ -69,9 +80,18 @@ function onTabKey(e: KeyboardEvent) {
       <form v-if="mode === 'create' && !done" class="stack" novalidate @submit.prevent="create">
         <label class="field">
           <span class="field__label">Crew name</span>
-          <input v-model="name" class="input" maxlength="40" autocomplete="off" :aria-invalid="!!error" aria-describedby="crew-msg" />
+          <input v-model="name" class="input" maxlength="40" autocomplete="off" placeholder="e.g. Saturday hikers" :aria-invalid="!!error" aria-describedby="crew-msg" data-testid="crew-name" />
         </label>
-        <p id="crew-msg" class="field__msg" :class="{ 'is-error': error }" aria-live="polite">{{ error || 'Prefilled for the demo. Change it if you like.' }}</p>
+        <p id="crew-msg" class="field__msg" :class="{ 'is-error': error }" aria-live="polite">{{ error || 'Anything your friends will recognise.' }}</p>
+        <label class="field">
+          <span class="field__label">Crew code <span class="field__opt">(optional)</span></span>
+          <input v-model="myCode" class="input input--code" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="We’ll make one from the name" :aria-invalid="!!codeError" aria-describedby="code-msg" data-testid="crew-code" />
+        </label>
+        <p id="code-msg" class="field__msg" :class="{ 'is-error': codeError }" aria-live="polite">{{ codeError || 'Leave blank and we’ll make one, like ' + (normalize(name).slice(0, 4) || 'CREW') + '-K3P9.' }}</p>
+        <label class="field">
+          <span class="field__label">About <span class="field__opt">(optional)</span></span>
+          <input v-model="blurb" class="input" maxlength="80" autocomplete="off" placeholder="What brings you together?" data-testid="crew-blurb" />
+        </label>
         <button type="submit" class="btn btn--primary btn--block">Create crew</button>
       </form>
 
@@ -92,18 +112,19 @@ function onTabKey(e: KeyboardEvent) {
           <div>
             <p class="kicker">{{ state.crew === 'joined' ? 'You’re in' : 'Crew created' }}</p>
             <h2 class="crewcard__name">{{ state.crewName }}</h2>
-            <p class="muted">{{ CREW.blurb }}</p>
+            <p v-if="state.crewBlurb" class="muted" data-testid="crew-blurb-text">{{ state.crewBlurb }}</p>
           </div>
-          <p class="code-pill" :aria-label="`Invite code ${CREW.code}`">{{ CREW.code }}</p>
+          <p class="code-pill" :aria-label="`Invite code ${state.crewCode}`" data-testid="crew-code-pill">{{ state.crewCode }}</p>
         </div>
-        <ul class="members" aria-label="Crew members">
-          <li v-for="m in MEMBERS" :key="m.id" class="members__row">
+        <ul class="members" aria-label="Crew members" data-testid="crew-members">
+          <li v-for="m in members" :key="m.id" class="members__row">
             <AvatarLink :id="m.id" />
             <span class="members__name">{{ m.name }}</span>
-            <span v-if="m.id === 'maya'" class="tag">You</span>
+            <span v-if="m.id === 'maya'" class="tag">{{ state.crew === 'created' ? 'You · Host' : 'You' }}</span>
             <span v-else class="members__status">{{ state.crew === 'created' ? 'Joined via invite' : 'Member' }}</span>
           </li>
         </ul>
+        <p v-if="members.length === 1" class="muted small" data-testid="crew-solo">Just you so far. Invite your crew to get everyone in.</p>
       </div>
       <RouterLink v-if="done" to="/demo/stats" class="card firstcard" data-testid="crew-stats">
         <span class="firstcard__badge" aria-hidden="true"><Badge id="oracle" :size="40" /></span>

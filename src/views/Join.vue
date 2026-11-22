@@ -6,21 +6,28 @@ import Mark from '../components/Mark.vue'
 import Orbit from '../components/Orbit.vue'
 import Sparkle from '../components/Sparkle.vue'
 import { CREW, MEMBERS } from '../data'
-import { state } from '../store'
-import { isKnownCode } from '../invite'
+import { joinCustomCrew, seedSample, state } from '../store'
+import { findCrew } from '../invite'
 import { firstLock, startFirstLock } from '../firstlock'
 
 const route = useRoute()
 const router = useRouter()
 const raw = computed(() => String(route.params.code ?? ''))
-const known = computed(() => isKnownCode(raw.value))
-const already = computed(() => known.value && state.crew !== null)
+// Which crew this link opens: the sample (C7-GATE), the crew already in this session, or a custom crew
+// whose name rides in the link (?n=). Never falls back to Gate C Crew for some other code.
+const found = computed(() => findCrew(raw.value, typeof route.query.n === 'string' ? route.query.n : undefined))
+const known = computed(() => found.value !== null)
+const already = computed(() => found.value?.kind === 'mine')
 const firstDone = computed(() => firstLock.lockedAt !== null)
-const crewName = computed(() => (state.crew ? state.crewName : CREW.name))
+const crewName = computed(() => found.value?.name ?? CREW.name)
+const crewCode = computed(() => found.value?.code ?? '')
+const blurb = computed(() => (found.value?.kind === 'sample' ? CREW.blurb : ''))
 
 function join() {
-  state.crew = 'joined'
-  state.crewName = CREW.name
+  const f = found.value
+  if (!f) return
+  if (f.kind === 'sample') seedSample('joined')
+  else joinCustomCrew(f.name, f.code)
   startFirstLock()
   router.push('/demo/first')
 }
@@ -39,12 +46,12 @@ function join() {
         </h1>
         <p class="lede">
           <template v-if="already">No need to join again.{{ firstDone ? ' Your first call is already locked.' : '' }} Pick up where the crew is.</template>
-          <template v-else><strong>Maya Thompson</strong> invited you. {{ CREW.blurb }}</template>
+          <template v-else><strong>Maya Thompson</strong> invited you.{{ blurb ? ' ' + blurb : '' }}</template>
         </p>
         <ul class="join__faces" :aria-label="`${MEMBERS.length} people in ${crewName}`">
           <li v-for="m in MEMBERS" :key="m.id" :title="m.name"><Avatar :id="m.id" :size="56" /><span class="join__first">{{ m.first }}</span></li>
         </ul>
-        <p class="join__code muted small">Crew code <span class="mono">{{ CREW.code }}</span></p>
+        <p class="join__code muted small">Crew code <span class="mono" data-testid="join-code">{{ crewCode }}</span></p>
         <div class="join__actions">
           <button v-if="!already" type="button" class="btn btn--primary btn--block btn--lg" data-testid="join" @click="join">
             <Sparkle :size="16" color="var(--ink)" /> Join

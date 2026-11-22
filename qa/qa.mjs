@@ -1,5 +1,5 @@
 // Local QA walk-through with Playwright. Usage: npm run build && npm run preview, then npm run qa
-import { chromium } from 'playwright'
+import { chromium, webkit } from 'playwright'
 import fs from 'node:fs'
 
 const BASE = (process.env.BASE ?? 'http://localhost:4173').replace(/\/$/, '')
@@ -9,6 +9,13 @@ fs.mkdirSync(OUT, { recursive: true })
 const results = []
 const ok = (name, pass, detail = '') => { results.push({ name, pass, detail }); console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`) }
 
+// Most flows just need a crew: join the prebuilt sample (Gate C Crew · C7-GATE) from the crew screen.
+async function joinSample(p) {
+  await p.getByRole('tab', { name: 'Join with a code' }).click()
+  await p.getByRole('button', { name: 'C7-GATE' }).click()
+  await p.getByRole('button', { name: 'Join crew' }).click()
+  await p.getByRole('list', { name: 'Crew members' }).waitFor()
+}
 const browser = await chromium.launch()
 
 async function page(width, opts = {}) {
@@ -95,9 +102,9 @@ for (const w of [390, 1280]) {
   await nav(p, '**/crew')
   await shot(p, `02a-crew-create-${tag}`)
   await audit(p, `crew@${w}`)
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await p.getByTestId('crew-name').fill('Weekend crew'); await p.getByRole('button', { name: 'Create crew' }).click()
   await p.getByRole('list', { name: 'Crew members' }).waitFor()
-  ok(`crew create@${w}: five members shown`, (await p.locator('.members__row').count()) === 5)
+  ok(`crew create@${w}: new crew is just you, own code, no sample blurb`, (await p.locator('.members__row').count()) === 1 && /^WEEK-[A-Z2-9]{4}$/.test(await p.getByTestId('crew-code-pill').innerText()) && !(await p.locator('main').innerText()).includes('Denver'))
   await shot(p, `02b-crew-created-${tag}`)
   await p.getByRole('button', { name: 'Choose what to lock' }).click()
   await nav(p, '**/templates')
@@ -217,7 +224,7 @@ for (const [id, e] of Object.entries(expect)) {
     const p = await page(w, { reduced: !e.named })
     const want = (legacy) => e.named || w === 390
     await p.goto(DEMO + '/crew')
-    await p.getByRole('button', { name: 'Create crew' }).click()
+    await joinSample(p)
     await p.getByRole('button', { name: 'Choose what to lock' }).click()
     await nav(p, '**/templates')
     await p.locator(`label.tpl:has(input[value="${id}"])`).click()
@@ -330,7 +337,7 @@ for (const w of [390, 1280]) {
   await nav(p, '**/partner/run')
   ok('entry: welcome link opens /partner/run', new URL(p.url()).pathname.endsWith('/partner/run'))
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   await p.getByRole('button', { name: 'Choose what to lock' }).click(); await nav(p, '**/templates')
   ok('entry: templates link points at /partner/run', (await p.getByRole('link', { name: 'See it from a partner app' }).getAttribute('href')).endsWith('/partner/run'))
   // picking a template after a partner entry clears the partner condition
@@ -429,7 +436,7 @@ for (const w of [390, 1280]) {
 for (const w of [390, 1280]) {
   const p = await page(w, { reduced: true })
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   await p.getByRole('button', { name: 'Choose what to lock' }).click()
   await p.getByRole('button', { name: /^Use / }).click()
   await p.getByRole('button', { name: 'Lock my call' }).click()
@@ -468,7 +475,8 @@ for (const w of [390, 1280]) {
   await p.screenshot({ path: `${OUT}/kbd-focus-welcome-1280.png` })
   await p.keyboard.press('Enter')
   await nav(p, '**/crew')
-  // Tab until Create crew, press Enter
+  // Name the crew, then Tab until Create crew, press Enter
+  await p.getByTestId('crew-name').fill('Weekend crew')
   let found = false
   for (let i = 0; i < 12 && !found; i++) { await p.keyboard.press('Tab'); found = await p.evaluate(() => document.activeElement?.textContent?.trim() === 'Create crew') }
   ok('keyboard: reach Create crew', found)
@@ -525,7 +533,7 @@ for (const w of [390, 1280]) {
   await p.goto(DEMO + '/')
   await p.evaluate(() => document.fonts.ready)
   await p.waitForTimeout(300)
-  const boxes = await p.evaluate(() => [...document.querySelectorAll('.welcome__kicker, .welcome__title, .welcome__tagline, .welcome__line, .welcome__hint, .welcome__credit, .demo-tag, .welcome__partner')].map((el) => {
+  const boxes = await p.evaluate(() => [...document.querySelectorAll('.welcome__kicker, .welcome__title, .welcome__tagline, .welcome__line, .welcome__hint, .welcome__credit, .demo-tag, .welcome__partner, .welcome__bar .topnav__link')].map((el) => {
     const b = el.getBoundingClientRect(); return { cls: el.className, x: b.x, y: b.y, w: b.width, h: b.height, color: getComputedStyle(el).color }
   }))
   await p.addStyleTag({ content: '.welcome__body *, .welcome__credit, .welcome__bar * { color: transparent !important; } .sparkle, .btn { visibility: hidden !important; }' })
@@ -555,7 +563,7 @@ for (const w of [390, 1280]) {
   const p = await page(w)
   const err = (id) => p.locator(`#${id}`).innerText()
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   await p.getByRole('button', { name: 'Choose what to lock' }).click(); await nav(p, '**/templates')
   const card = p.getByTestId('create-own')
   await card.scrollIntoViewIfNeeded()
@@ -675,7 +683,7 @@ for (const w of [390, 1280]) {
 {
   const p = await page(390)
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   await p.goto(DEMO + '/templates'); await p.waitForTimeout(400)
   await p.getByTestId('create-own').focus()
   const ring = await p.evaluate(() => getComputedStyle(document.activeElement).outlineStyle)
@@ -696,7 +704,7 @@ for (const w of [390, 1280]) {
 for (const w of [390, 1280]) {
   const p = await page(w)
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   const entry = p.getByTestId('invite-entry')
   ok(`invite@${w}: entry on the crew screen`, await entry.isVisible())
   await shot(p, `16-invite-crew-entry-${w}`)
@@ -828,7 +836,7 @@ for (const w of [390, 1280]) {
 for (const w of [390, 1280]) {
   const p = await page(w, { reduced: true })
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   await p.getByTestId('invite-entry').click(); await nav(p, '**/demo/invite')
   ok(`reduced motion invite@${w}: who’s in is final immediately`, (await p.getByTestId('who-count').innerText()) === '5 of 5 in' && (await p.locator('.whosin__row.is-in').count()) === 4)
   await p.context().close()
@@ -854,10 +862,10 @@ for (const w of [390, 1280]) {
 for (const w of [390, 1280]) {
   const p = await page(w)
   await p.goto(DEMO + '/'); await p.waitForTimeout(300)
-  ok(`faq@${w}: welcome nav + footer link to /demo/faq`, (await p.getByTestId('nav-faq').getAttribute('href')) === '/demo/faq' && (await p.getByTestId('foot-faq').getAttribute('href')) === '/demo/faq')
+  ok(`faq@${w}: welcome footer links to /demo/faq (not in the top nav)`, (await p.getByTestId('nav-faq').count()) === 0 && (await p.getByTestId('foot-faq').getAttribute('href')) === '/demo/faq')
   await p.getByTestId('foot-faq').click(); await nav(p, '**/demo/faq')
   ok(`faq@${w}: footer link opens the FAQ`, (await p.locator('h1').innerText()) === 'Questions, answered')
-  ok(`faq@${w}: app top bar has an FAQ link`, (await p.locator('.topbar [data-testid="nav-faq"]').getAttribute('href')) === '/demo/faq')
+  ok(`faq@${w}: app footer has the FAQ link, top bar does not`, (await p.locator('.topbar a[href="/demo/faq"]').count()) === 0 && (await p.locator('.appfoot [data-testid="foot-faq"]').getAttribute('href')) === '/demo/faq')
   ok(`faq@${w}: noindex`, (await p.locator('meta[name="robots"]').getAttribute('content')) === 'noindex')
   const qs = await p.locator('.faq__btn').allInnerTexts()
   const want = ['What is Akeru?', 'What’s a lock?', 'What can unlock it?', 'Who sees my locks?', 'Can a reveal be shared?', 'Is there any money involved?', 'What are templates, and can I make my own?', 'How do I invite friends?', 'What do partners see?', 'What does Akeru mean?', 'Is there an app?']
@@ -923,7 +931,7 @@ for (const w of [390, 1280]) {
 for (const w of [390, 1280]) {
   const p = await page(w)
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   await p.getByTestId('crew-stats').click(); await nav(p, '**/demo/stats')
   ok(`stats@${w}: opens from the crew screen`, (await p.locator('h1').innerText()) === 'Crew stats')
   ok(`stats@${w}: noindex`, (await p.locator('meta[name="robots"]').getAttribute('content')) === 'noindex')
@@ -969,17 +977,10 @@ for (const w of [390, 1280]) {
 {
   const p = await page(390)
   await p.goto(DEMO + '/crew'); await p.waitForTimeout(300)
-  await p.getByTestId('nav-more').click()
-  ok('nav: More menu opens with Stats, FAQ, Coming soon', (await p.getByTestId('nav-more').getAttribute('aria-expanded')) === 'true' && await p.getByTestId('nav-stats').isVisible() && await p.getByTestId('nav-soon').isVisible())
-  await p.screenshot({ path: `${OUT}/20-stats-nav-menu-390.png` })
+  ok('nav: Crew stats is a plain link in the top bar at 390', await p.getByTestId('nav-stats').isVisible() && (await p.getByTestId('nav-stats').evaluate((e) => e.tagName)) === 'A')
+  await p.screenshot({ path: `${OUT}/20-stats-nav-390.png` })
   await p.getByTestId('nav-stats').click(); await nav(p, '**/demo/stats')
   ok('stats: opens from the demo nav', (await p.locator('h1').innerText()) === 'Crew stats')
-  await p.getByTestId('nav-more').focus(); await p.keyboard.press('Enter'); await p.waitForTimeout(100)
-  ok('nav keyboard: Enter opens, focus on first item', await p.evaluate(() => document.activeElement?.getAttribute('data-testid') === 'nav-stats'))
-  await p.keyboard.press('ArrowDown')
-  ok('nav keyboard: ArrowDown moves to FAQ', await p.evaluate(() => document.activeElement?.getAttribute('data-testid') === 'nav-faq'))
-  await p.keyboard.press('Escape')
-  ok('nav keyboard: Escape closes and returns focus', (await p.getByTestId('nav-more').getAttribute('aria-expanded')) === 'false' && await p.evaluate(() => document.activeElement?.getAttribute('data-testid') === 'nav-more'))
   let hit = false
   for (let i = 0; i < 40 && !hit; i++) { await p.keyboard.press('Tab'); hit = await p.evaluate(() => document.activeElement?.closest('[data-testid="badge-optin"]') !== null) }
   await p.keyboard.press('Space')
@@ -1021,7 +1022,7 @@ for (const w of [390, 1280]) {
   await p.goto(DEMO + '/r/x7k2'); await p.waitForTimeout(300)
   await p.locator('.pubcalls [data-testid="av-jake"]').click(); await nav(p, '**/demo/u/jake')
   ok(`profile@${w}: reveal avatar reaches Jake`, (await p.locator('h1').innerText()) === 'Jake Miller')
-  await p.goto(DEMO + '/crew'); await p.getByRole('button', { name: 'Create crew' }).click()
+  await p.goto(DEMO + '/crew'); await joinSample(p)
   await p.locator('.members [data-testid="av-riley"]').click(); await nav(p, '**/demo/u/riley')
   ok(`profile@${w}: crew avatar reaches Riley`, (await p.locator('h1').innerText()) === 'Riley Brooks')
   await p.goto(DEMO + '/u/nobody'); await p.waitForTimeout(300)
@@ -1090,11 +1091,12 @@ for (const w of [390, 1280]) {
   const txt = await p.locator('.screen__main').innerText()
   ok(`soon@${w}: feedback note, no dates/prices/user counts`, /shaped by crew feedback/i.test(txt) && !/\b(20\d\d|Q[1-4]|january|february|march|april|june|july|august|september|october|november|december|next month|this year)\b|\$|€|users|free/i.test(txt))
   const fb = p.getByTestId('feedback')
-  ok(`soon@${w}: feedback button is a mailto (sends nothing itself)`, (await fb.getAttribute('href')).startsWith('mailto:') && !(await fb.getAttribute('href')).includes('@'))
+  ok(`soon@${w}: feedback button is a mailto:contact@akeru.app link (sends nothing itself)`, /^mailto:contact@akeru\.app\?subject=/.test(await fb.getAttribute('href')) && (await fb.evaluate((a) => a.tagName)) === 'A' && !(await fb.getAttribute('target')))
+  ok(`soon@${w}: copy doesn’t claim the mailbox is live`, !/we(’|')ll (reply|answer|get back)|reply within|we read every|inbox is open/i.test(await p.locator('main').innerText()))
   await shot(p, `23-soon-${w}`)
   await audit(p, `soon@${w}`)
-  await p.getByTestId('nav-more').click(); await p.getByTestId('nav-soon').click(); await p.waitForTimeout(300)
-  ok(`soon@${w}: reachable from the demo nav`, (await p.locator('h1').innerText()) === 'Coming soon')
+  await p.getByTestId('foot-soon').click(); await p.waitForTimeout(600)
+  ok(`soon@${w}: reachable from the demo footer`, (await p.locator('h1').innerText()) === 'Coming soon')
   ok(`errors soon@${w}`, p.errors.length === 0, p.errors.join(' | '))
   ok(`network soon@${w}: no external requests`, p.external.length === 0)
   await p.context().close()
@@ -1112,7 +1114,7 @@ for (const w of [390, 1280]) {
 {
   const p = await page(390)
   await p.goto(DEMO + '/crew')
-  await p.getByRole('button', { name: 'Create crew' }).click()
+  await joinSample(p)
   await p.getByTestId('invite-entry').focus(); await p.keyboard.press('Enter'); await nav(p, '**/demo/invite')
   ok('invite keyboard: Enter on the entry opens invite, focus on title', await p.waitForFunction(() => document.activeElement?.tagName === 'H1', null, { timeout: 2000 }).then(() => true, () => false))
   const seen = []
@@ -1145,6 +1147,184 @@ for (const w of [390, 1280]) {
   await p.context().close(); await p2.context().close()
 }
 
+
+// ---------- regression: a crew you start keeps its own name + code everywhere ----------
+// Siva: started a crew "vvv", but the card kept C7-GATE, the Denver blurb and the sample members, and
+// invite/join/lock/locked/reveal fell back to Gate C Crew. The sample may only appear when you join it.
+for (const w of [390, 1280]) {
+  const p = await page(w, { reduced: true })
+  const noSample = async (where) => { const t = await p.locator('body').innerText(); ok(`custom crew@${w}: ${where} shows no sample crew (C7-GATE / Gate C Crew / Denver)`, !/C7-?GATE|Gate C Crew|Denver/i.test(t), (t.match(/C7-?GATE|Gate C Crew|Denver/i) || [''])[0]) }
+  await p.goto(DEMO + '/crew'); await p.waitForTimeout(300)
+  ok(`custom crew@${w}: name field starts empty (no sample name)`, (await p.getByTestId('crew-name').inputValue()) === '')
+  await p.getByTestId('crew-name').fill('vvv')
+  await p.getByRole('button', { name: 'Create crew' }).click(); await p.getByTestId('crew-code-pill').waitFor()
+  const code = await p.getByTestId('crew-code-pill').innerText()
+  ok(`custom crew@${w}: card shows vvv + a generated VVV-xxxx code`, (await p.locator('.crewcard__name').innerText()) === 'vvv' && /^VVV-[A-Z2-9]{4}$/.test(code), code)
+  ok(`custom crew@${w}: creator only, no blurb`, (await p.locator('[data-testid="crew-members"] .members__row').count()) === 1 && (await p.locator('[data-testid="crew-members"]').innerText()).includes('Maya Thompson') && (await p.getByTestId('crew-blurb-text').count()) === 0 && await p.getByTestId('crew-solo').isVisible())
+  await noSample('crew card')
+  await shot(p, `28-custom-crew-card-${w}`)
+  await audit(p, `custom crew card@${w}`)
+  // invite: link, code, QR, Text/WhatsApp all carry vvv + its code
+  await p.getByTestId('invite-entry').click(); await nav(p, '**/demo/invite')
+  const link = `${BASE}/j/${code}?n=vvv`
+  ok(`custom crew@${w}: invite shows akeru.app/j/${code}`, (await p.getByTestId('invite-link').innerText()) === `akeru.app/j/${code}` && (await p.locator('main .kicker').first().textContent()).trim() === 'vvv')
+  ok(`custom crew@${w}: copy-code shows ${code}`, (await p.getByTestId('copy-code').innerText()).trim() === code)
+  const sms = decodeURIComponent((await p.getByTestId('share-sms').getAttribute('href')).split('body=')[1])
+  ok(`custom crew@${w}: Text message names vvv and links its code`, sms === `Join vvv on Akeru, we’re locking calls 🔒 ${link}`, sms)
+  { const { PNG } = await import('pngjs'); const jsQR = (await import('jsqr')).default
+    const png = PNG.sync.read(await p.getByTestId('qr').screenshot()); const d = jsQR(new Uint8ClampedArray(png.data), png.width, png.height)
+    ok(`custom crew@${w}: QR decodes to the vvv join link`, d?.data === link, d?.data ?? 'no decode') }
+  await noSample('invite')
+  await shot(p, `28-custom-crew-invite-${w}`)
+  // /demo/j/{code} in the same session: already in vvv
+  await p.goto(`${DEMO}/j/${code}`); await p.waitForTimeout(400)
+  ok(`custom crew@${w}: /demo/j/${code} says you’re already in vvv`, (await p.locator('h1').innerText()) === 'You’re already in vvv' && (await p.getByTestId('join-code').innerText()) === code)
+  // a friend opens the invite link in a brand-new tab (no session): /j/{code}?n=vvv
+  const fctx = await browser.newContext({ viewport: { width: w, height: w < 600 ? 844 : 800 }, reducedMotion: 'reduce' })
+  await fctx.addInitScript(() => { try { sessionStorage.setItem('akeru.demo.unlocked', '1') } catch {} })
+  const f = await fctx.newPage()
+  await f.goto(link); await f.waitForTimeout(500)
+  ok(`custom crew@${w}: /j/${code} link opens “Join vvv” in a fresh tab`, new URL(f.url()).pathname === `/demo/j/${code}` && (await f.locator('h1').innerText()) === 'Join vvv' && (await f.getByTestId('join-code').innerText()) === code, f.url())
+  ok(`custom crew@${w}: join page has no sample crew`, !/C7-?GATE|Gate C Crew|Denver/i.test(await f.locator('body').innerText()))
+  await f.screenshot({ path: `${OUT}/28-custom-crew-join-${w}.png`, fullPage: true })
+  await f.getByTestId('join').click(); await f.waitForURL('**/demo/first'); await f.waitForTimeout(500)
+  ok(`custom crew@${w}: first lock is in vvv with its code`, (await f.locator('main .kicker').first().innerText()).toLowerCase().includes('you’re in vvv') && (await f.getByTestId('crew-line').innerText()).includes(code))
+  await f.getByTestId('pick-jake').click(); await f.getByTestId('first-lock').click(); await f.waitForTimeout(1200)
+  ok(`custom crew@${w}: sealed first lock keeps vvv + code`, (await f.locator('h1').innerText()).includes('vvv') && (await f.getByTestId('crew-line').innerText()).includes(code) && !/C7-?GATE|Gate C Crew|Denver|Gate C/i.test(await f.locator('main').innerText()))
+  await f.screenshot({ path: `${OUT}/28-custom-crew-firstlock-${w}.png`, fullPage: true })
+  await fctx.close()
+  // creator carries on: templates → lock → locked → reveal, all in vvv
+  await p.goto(DEMO + '/templates'); await p.waitForTimeout(400)
+  ok(`custom crew@${w}: templates is for vvv (not reset to the sample)`, (await p.locator('main .kicker').first().textContent()).includes('vvv'))
+  await p.getByRole('button', { name: /^Use / }).click(); await nav(p, '**/lock')
+  ok(`custom crew@${w}: lock shows vvv + code`, (await p.getByTestId('crew-line').innerText()).includes('vvv') && (await p.getByTestId('crew-line').innerText()).includes(code))
+  await p.getByRole('button', { name: 'Lock my call' }).click(); await nav(p, '**/locked')
+  ok(`custom crew@${w}: locked shows vvv + code`, (await p.getByTestId('crew-line').innerText()).includes('vvv') && (await p.getByTestId('crew-line').innerText()).includes(code))
+  await noSample('locked')
+  await shot(p, `28-custom-crew-locked-${w}`)
+  await p.getByRole('button', { name: /Simulate unlock|Open now/ }).click(); await nav(p, '**/aketa'); await p.waitForTimeout(800)
+  await p.getByRole('button', { name: 'See everyone’s calls' }).click(); await nav(p, '**/demo/reveal')
+  ok(`custom crew@${w}: reveal shows vvv + code`, new URL(p.url()).pathname === '/demo/reveal' && (await p.getByTestId('crew-line').innerText()).includes('vvv') && (await p.getByTestId('crew-line').innerText()).includes(code), p.url())
+  await shot(p, `28-custom-crew-reveal-${w}`)
+  ok(`errors custom crew@${w}`, p.errors.length === 0, p.errors.join(' | '))
+  await p.context().close()
+}
+{
+  const p = await page(390)
+  await p.goto(DEMO + '/crew'); await p.waitForTimeout(300)
+  await p.getByTestId('crew-name').fill('vvv'); await p.getByTestId('crew-code').fill('C7-GATE')
+  await p.getByRole('button', { name: 'Create crew' }).click()
+  ok('custom crew: typing the sample code C7-GATE is refused', (await p.locator('#code-msg').innerText()).includes('sample crew') && (await p.getByTestId('crew-code-pill').count()) === 0)
+  await p.getByTestId('crew-code').fill('vvv 2026'); await p.getByRole('button', { name: 'Create crew' }).click(); await p.getByTestId('crew-code-pill').waitFor()
+  ok('custom crew: a typed code is kept (tidied to VVV-2026)', (await p.getByTestId('crew-code-pill').innerText()) === 'VVV-2026')
+  await p.getByTestId('invite-entry').click(); await nav(p, '**/demo/invite')
+  ok('custom crew: invite uses the typed code', (await p.getByTestId('invite-link').innerText()) === 'akeru.app/j/VVV-2026')
+  await p.goto(DEMO + '/j/ZZZZ-9999'); await p.waitForTimeout(300)
+  ok('custom crew: an unknown code (no name in link) is an error, not Gate C Crew', await p.getByTestId('join-error').isVisible())
+  await p.context().close()
+  const q = await page(390)
+  await q.goto(DEMO + '/crew'); await q.waitForTimeout(300)
+  await joinSample(q)
+  ok('sample crew still works: joining C7-GATE gives Gate C Crew, five members, Denver blurb', (await q.locator('.crewcard__name').innerText()) === 'Gate C Crew' && (await q.getByTestId('crew-code-pill').innerText()) === 'C7-GATE' && (await q.locator('[data-testid="crew-members"] .members__row').count()) === 5 && (await q.getByTestId('crew-blurb-text').innerText()).includes('Denver'))
+  await q.context().close()
+}
+
+// ---------- regression: contact address only where a contact link already existed ----------
+{
+  const p = await page(390)
+  const spots = {}
+  for (const path of ['/', '/demo/', '/demo/crew', '/demo/faq', '/demo/soon', '/demo/partners', '/demo/stats', '/demo/partner/run']) {
+    await p.goto(BASE + path); await p.waitForTimeout(350)
+    spots[path] = await p.evaluate(() => [...document.querySelectorAll('a[href^="mailto:"]')].map((a) => a.getAttribute('href')))
+  }
+  const all = Object.values(spots).flat()
+  ok('contact: every mailto points at contact@akeru.app', all.length > 0 && all.every((h) => h.startsWith('mailto:contact@akeru.app')), JSON.stringify(spots))
+  ok('contact: no new contact links (only the Coming soon button)', Object.entries(spots).every(([k, v]) => (k === '/demo/soon' ? v.length === 1 : v.length === 0)), JSON.stringify(spots))
+  await p.context().close()
+}
+
+// ---------- regression: no More menu; plain nav + footer links open the full pages ----------
+// Original bug: Safari (macOS + iOS) does not focus links/buttons on click or tap, so on mousedown focus
+// simply left the open More menu (focusout, relatedTarget null) and the menu closed before the tap landed.
+// The menu is gone now; these checks run with that same Safari focus model emulated.
+const SAFARI_FOCUS = () => document.addEventListener('mousedown', (e) => {
+  if (e.target instanceof Element && e.target.closest('a, button')) { e.preventDefault(); if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur() }
+}, true)
+const TITLES = { '/demo/templates': 'What are you locking?', '/demo/create': 'Ask your question', '/demo/stats': 'Crew stats', '/demo/faq': 'Questions, answered', '/demo/soon': 'Coming soon' }
+const TOP = { 390: [['nav-stats', '/demo/stats']], 1280: [['nav-stats', '/demo/stats']] }
+const FOOT = [['foot-faq', '/demo/faq'], ['foot-soon', '/demo/soon']]
+const wk = await webkit.launch()
+for (const [bn, br] of [['chromium', browser], ['webkit', wk]]) {
+  for (const w of [390, 1280]) {
+    const ctx = await br.newContext({ viewport: { width: w, height: w < 600 ? 844 : 800 }, hasTouch: w < 600, isMobile: bn === 'webkit' && w < 600 })
+    await ctx.addInitScript(() => { try { sessionStorage.setItem('akeru.demo.unlocked', '1') } catch {} })
+    await ctx.addInitScript(SAFARI_FOCUS)
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', (e) => errs.push(String(e)))
+    const act = (l) => (w < 600 ? l.tap({ timeout: 4000 }) : l.click({ timeout: 4000 })).catch((e) => errs.push('act: ' + String(e).split('\n')[0]))
+    for (const start of ['/', '/crew', '/stats', '/faq']) {
+      await p.goto(DEMO + start); await p.waitForTimeout(400)
+      const r = await p.evaluate(() => ({
+        menu: document.querySelectorAll('.navmenu, [data-testid="nav-more"], [aria-haspopup], .topnav [aria-expanded], .topnav button, .topnav ul').length,
+        more: [...document.querySelectorAll('header, .topbar, .welcome__bar, footer, nav')].some((n) => /\bmore\b/i.test(n.innerText.replace(/more from/i, ''))),
+        vis: [...document.querySelectorAll('.topnav a')].filter((a) => a.getBoundingClientRect().width > 0).map((a) => a.dataset.testid),
+        label: document.querySelector('[data-testid="nav-stats"]')?.innerText.trim(),
+        topFaqSoon: document.querySelectorAll('.topbar a[href="/demo/faq"], .topbar a[href="/demo/soon"], .welcome__bar a[href="/demo/faq"], .welcome__bar a[href="/demo/soon"]').length,
+        foot: [...document.querySelectorAll('footer a[href="/demo/faq"], footer a[href="/demo/soon"]')].filter((a) => a.getBoundingClientRect().width > 0).map((a) => a.getAttribute('href')),
+      }))
+      ok(`no More menu or dropdown on /demo${start} (${bn})@${w}`, r.menu === 0 && !r.more, JSON.stringify(r))
+      ok(`top nav is only Crew stats on /demo${start} (${bn})@${w}`, r.vis.join() === 'nav-stats' && r.topFaqSoon === 0 && r.label === 'Crew stats', JSON.stringify(r))
+      ok(`footer has FAQ + Coming soon on /demo${start} (${bn})@${w}`, r.foot.join() === '/demo/faq,/demo/soon', r.foot.join())
+    }
+    for (const [area, items] of [['top nav', TOP[w]], ['footer', FOOT]]) {
+      for (const [id, path] of items) {
+        await p.goto(DEMO + '/crew'); await p.waitForTimeout(400)
+        const l = area === 'footer' ? p.locator('.appfoot').getByTestId(id) : p.locator('.topbar').getByTestId(id)
+        await l.scrollIntoViewIfNeeded()
+        const bb = await l.boundingBox()
+        await act(l); await p.waitForTimeout(700)
+        const tb = await p.locator('.topbar').boundingBox()
+        ok(`${area} ${id} → full ${path} page (${bn}, Safari focus model)@${w}`, new URL(p.url()).pathname === path && (await p.locator('main h1').innerText()) === TITLES[path] && tb.height < 100 && bb.height >= 44 && bb.width >= 44,
+          `${new URL(p.url()).pathname} h=${tb.height} target=${Math.round(bb.width)}x${Math.round(bb.height)}`)
+      }
+    }
+    await p.goto(DEMO + '/crew'); await p.waitForTimeout(400)
+    if (bn === 'chromium') {
+      await p.screenshot({ path: `${OUT}/26-after-nav-${w}.png`, clip: { x: 0, y: 0, width: w, height: 120 } })
+      await p.locator('.appfoot').scrollIntoViewIfNeeded(); await p.waitForTimeout(200)
+      await p.screenshot({ path: `${OUT}/26-after-footer-${w}.png` })
+      await audit(p, `nav+footer /demo/crew@${w}`)
+    }
+    ok(`errors nav+footer (${bn})@${w}`, errs.length === 0, errs.join(' | '))
+    await ctx.close()
+  }
+}
+await wk.close()
+{
+  const p = await page(390)
+  await p.goto(DEMO + '/crew'); await p.waitForTimeout(400)
+  const order = []
+  for (let i = 0; i < 40; i++) { await p.keyboard.press('Tab'); const id = await p.evaluate(() => document.activeElement?.dataset?.testid); if (id && (id.startsWith('nav-') || id.startsWith('foot-'))) order.push(id) }
+  ok('keyboard: Tab reaches Crew stats in the top bar, then both footer links', order.slice(0, 3).join() === 'nav-stats,foot-faq,foot-soon', order.join())
+  ok('keyboard: nav link has a visible focus ring', await p.evaluate(() => { const a = document.querySelector('[data-testid="nav-stats"]'); a.focus(); const s = getComputedStyle(a); return s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 2 }))
+  await p.getByTestId('foot-faq').focus(); await p.keyboard.press('Enter'); await nav(p, '**/demo/faq')
+  ok('keyboard: Enter on footer FAQ opens the full FAQ page', (await p.locator('main h1').innerText()) === 'Questions, answered')
+  await p.context().close()
+}
+
+// ---------- templates stay under “Choose what to lock” (unchanged) ----------
+for (const w of [390, 1280]) {
+  const p = await page(w)
+  await p.goto(DEMO + '/crew'); await p.waitForTimeout(300)
+  await joinSample(p)
+  await p.getByRole('button', { name: 'Choose what to lock' }).click(); await nav(p, '**/demo/templates')
+  ok(`templates@${w}: Choose what to lock lists all six templates + Create your own`, (await p.locator('label.tpl').count()) >= 6 && (await p.getByTestId('create-own').count()) === 1 && (await p.locator('h1').innerText()) === 'What are you locking?')
+  await p.getByTestId('create-own').scrollIntoViewIfNeeded(); await p.getByTestId('create-own').click(); await nav(p, '**/demo/create')
+  ok(`templates@${w}: Create your own card opens the builder`, (await p.locator('h1').innerText()) === 'Ask your question')
+  await p.goto(DEMO + '/'); await p.waitForTimeout(300)
+  ok(`welcome@${w}: no template picker or Create your own added to the demo home`, (await p.locator('[data-testid^="home-"], .homepick').count()) === 0 && (await p.getByText('Create your own').count()) === 0)
+  ok(`errors templates@${w}`, p.errors.length === 0, p.errors.join(' | '))
+  await p.context().close()
+}
 await browser.close()
 const failed = results.filter((r) => !r.pass)
 fs.writeFileSync(`${OUT}/results.json`, JSON.stringify(results, null, 2))

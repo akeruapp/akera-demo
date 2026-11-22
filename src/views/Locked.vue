@@ -6,8 +6,13 @@ import Avatar from '../components/Avatar.vue'
 import LockGlyph from '../components/LockGlyph.vue'
 import Orbit from '../components/Orbit.vue'
 import Sparkle from '../components/Sparkle.vue'
-import { MEMBERS, PARTNER, member, template } from '../data'
-import { state } from '../store'
+import { PARTNER, member, template } from '../data'
+import { crewMembers, state } from '../store'
+import CrewLine from '../components/CrewLine.vue'
+
+const members = computed(() => crewMembers())
+const WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six']
+const lockedLine = computed(() => (members.value.length === 1 ? 'Locked in. Just you so far.' : `Locked in. ${WORDS[members.value.length]} of ${WORDS[members.value.length].toLowerCase()}.`))
 
 const router = useRouter()
 const t = computed(() => template(state.templateId!))
@@ -46,7 +51,8 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
       <Sparkle class="lockhero__spark" :size="20" />
     </div>
     <p class="kicker center">Step 4 · Sealed</p>
-    <h1 class="title center">Locked in. Five of five.</h1>
+    <CrewLine class="crewline--center" />
+    <h1 class="title center">{{ lockedLine }}</h1>
     <p class="lede center">Your call: <strong class="amber">{{ myCallLabel }}</strong>. It stays sealed for everyone until real life delivers.</p>
 
     <section v-if="t.countdownSec > 0" class="card countdown" aria-labelledby="cd-label">
@@ -68,7 +74,7 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
     </section>
 
     <ul class="crewrow" aria-label="Everyone’s call is locked">
-      <li v-for="m in MEMBERS" :key="m.id" class="crewrow__item">
+      <li v-for="m in members" :key="m.id" class="crewrow__item">
         <Avatar :id="m.id" :size="44" locked />
         <span class="crewrow__name">{{ m.id === 'maya' ? 'You' : m.first }}</span>
       </li>

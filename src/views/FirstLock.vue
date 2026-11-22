@@ -7,7 +7,12 @@ import Sparkle from '../components/Sparkle.vue'
 import { MEMBERS, PHOTOS, member } from '../data'
 import type { MemberId } from '../data'
 import { prefersReducedMotion, state } from '../store'
+import CrewLine from '../components/CrewLine.vue'
 import { FIRST_LOCK, elapsedSec, firstLock, sealFirstLock } from '../firstlock'
+
+// A crew you started or joined by your own link isn't flying to Denver: keep its copy generic.
+const ctx = computed(() => (state.crewCustom ? `Next time ${state.crewName} meets up.` : FIRST_LOCK.context))
+const opens = computed(() => (state.crewCustom ? `everyone in ${state.crewName} has arrived` : FIRST_LOCK.opensWhen))
 
 // Arriving without Join (deep link, refresh) still counts from here.
 if (!firstLock.startedAt) firstLock.startedAt = Date.now()
@@ -48,7 +53,8 @@ const pickedName = computed(() => (firstLock.call === 'maya' ? 'yourself' : firs
       <template v-if="!sealed">
         <p class="kicker">You’re in {{ state.crewName }} · Your first call</p>
         <h1 class="title" tabindex="-1" data-focus-start>{{ FIRST_LOCK.question }}</h1>
-        <p class="lede">{{ FIRST_LOCK.context }} Tap who you think shows up last.</p>
+        <CrewLine />
+        <p class="lede">{{ ctx }} Tap who you think shows up last.</p>
 
         <fieldset class="facepick">
           <legend class="visually-hidden">{{ FIRST_LOCK.question }}</legend>
@@ -69,7 +75,8 @@ const pickedName = computed(() => (firstLock.call === 'maya' ? 'yourself' : firs
           <Sparkle class="seal__spark" :size="20" />
         </div>
         <p class="kicker first__center">Sealed · <span data-testid="elapsed">Locked in {{ elapsed }}s</span></p>
-        <h1 class="title first__center" tabindex="-1" data-focus-start>You’re in. It opens when {{ FIRST_LOCK.opensWhen }}.</h1>
+        <h1 class="title first__center" tabindex="-1" data-focus-start>You’re in. It opens when {{ opens }}.</h1>
+        <CrewLine class="crewline--center" />
         <p class="lede first__center">Your call on “{{ FIRST_LOCK.question }}” is locked: you picked {{ pickedName }}. Nobody can see it until then.</p>
 
         <section class="card countdown" aria-labelledby="fl-cd">

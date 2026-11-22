@@ -11,6 +11,8 @@ const router = useRouter()
 const t = computed(() => template(state.templateId!))
 const reduced = prefersReducedMotion()
 const replaying = state.revealSeen
+// A crew you started solo: by the time it opens, the demo assumes your invites went out and friends locked theirs.
+state.invited = true
 // Phases: 0 sealed, 1 shackle opens, 2 burst + word, 3 settled (held end state)
 const phase = ref(reduced || replaying ? 3 : 0)
 const cta = ref<HTMLButtonElement | null>(null)

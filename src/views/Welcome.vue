@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import Mark from '../components/Mark.vue'
-import NavMenu from '../components/NavMenu.vue'
+import TopNav from '../components/TopNav.vue'
 import { PHOTOS } from '../data'
 import { resetDemo } from '../store'
 
@@ -18,7 +18,7 @@ function start() {
     <div class="welcome__scrim" aria-hidden="true" />
     <header class="welcome__bar">
       <span class="wordmark"><Mark :size="24" />akeru</span>
-      <span class="welcome__barend"><NavMenu /><span class="demo-tag">Clickable demo</span></span>
+      <span class="welcome__barend"><TopNav /><span class="demo-tag">Clickable demo</span></span>
     </header>
     <main class="welcome__body">
       <Mark class="welcome__mark" :size="72" />
