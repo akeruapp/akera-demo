@@ -7,10 +7,9 @@ import Sparkle from '../components/Sparkle.vue'
 import CrewLine from '../components/CrewLine.vue'
 import { CREW, MEMBERS, PHOTOS, findTemplate, member } from '../data'
 import type { MemberId } from '../data'
-import { BADGES, MEMORIES, PROFILES, badge, earnedFor, memoryHref, rate } from '../stats'
+import { BADGES, MEMORIES, PROFILES, badge, earnedFor, memoryHref, newCrewCalls, newCrewEarned, rate } from '../stats'
 import type { EarnedBadge } from '../stats'
 import { crewMembers, state } from '../store'
-import { firstLock } from '../firstlock'
 
 // Stats follow the active crew. The Gate C Crew history is sample data: it only shows for the sample crew
 // (or with no crew yet, labelled as the sample). A crew you started has its own, mostly empty, history.
@@ -18,15 +17,10 @@ const isNew = computed(() => !!state.crew && state.crewCustom)
 const crewName = computed(() => (state.crew ? state.crewName : CREW.name))
 const back = computed(() => (state.crew ? { to: '/demo/crew', label: `Back to ${state.crewName}` } : { to: '/demo/', label: 'Back to the demo' }))
 const members = computed(() => (isNew.value ? crewMembers() : MEMBERS))
-const myCalls = computed(() => (state.lockedAt ? 1 : 0) + (firstLock.lockedAt ? 1 : 0))
+const myCalls = computed(() => newCrewCalls('maya'))
 const me = computed(() => (isNew.value ? { hits: 0, calls: myCalls.value, streak: 0 } : PROFILES.maya))
 const myRate = computed(() => (isNew.value ? (me.value.calls ? '0%' : '–') : `${rate(PROFILES.maya)}%`))
-const mine = computed<EarnedBadge[]>(() => {
-  if (!isNew.value) return earnedFor('maya')
-  const e = new Set<EarnedBadge>(earnedFor('maya').filter((b) => b === 'firstlock' || b === 'maker'))
-  if (state.crew === 'created' && state.invited) e.add('starter')
-  return BADGES.map((b) => b.id).filter((b) => e.has(b))
-})
+const mine = computed<EarnedBadge[]>(() => (isNew.value ? newCrewEarned('maya') : earnedFor('maya')))
 const alsoBy = (b: EarnedBadge) => (isNew.value ? [] : MEMBERS.filter((m) => m.id !== 'maya' && earnedFor(m.id).includes(b)).map((m) => m.first))
 const opened = computed(() => (isNew.value ? (state.revealSeen ? 1 : 0) : 24))
 const revealName = computed(() => (state.templateId ? findTemplate(state.templateId)?.name ?? 'Your reveal' : 'Your reveal'))

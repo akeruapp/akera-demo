@@ -1015,6 +1015,7 @@ for (const w of [390, 1280]) {
     }
   }
   await p.goto(DEMO + '/u/maya'); await p.waitForTimeout(300)
+  ok(`profile@${w}: sample Maya keeps her sample numbers (12 calls, 58%)`, (await p.getByTestId('prof-calls').innerText()) === '12' && (await p.getByTestId('prof-rate').innerText()) === '58%' && (await p.getByTestId('prof-crew').textContent()) === 'You')
   ok(`profile@${w}: noindex`, (await p.locator('meta[name="robots"]').getAttribute('content')) === 'noindex')
   await p.getByTestId('prof-rev-reunion').click(); await nav(p, '**/demo/r/c4ps')
   ok(`profile@${w}: recent reveal link opens the reveal`, (await p.locator('h1').innerText()) === 'Ten years, five predictions')
@@ -1026,7 +1027,7 @@ for (const w of [390, 1280]) {
   await p.locator('.members [data-testid="av-riley"]').click(); await nav(p, '**/demo/u/riley')
   ok(`profile@${w}: crew avatar reaches Riley`, (await p.locator('h1').innerText()) === 'Riley Brooks')
   await p.goto(DEMO + '/u/nobody'); await p.waitForTimeout(300)
-  ok(`profile@${w}: unknown slug shows friendly error + way back`, (await p.getByTestId('prof-missing').innerText()).includes('No one by that name') && (await p.getByRole('link', { name: 'Back to the crew' }).count()) === 1)
+  ok(`profile@${w}: unknown slug shows friendly error + way back`, (await p.getByTestId('prof-missing').innerText()).includes('No one by that name') && (await p.getByRole('link', { name: 'Back to Gate C Crew' }).count()) === 1)
   await shot(p, `21-profile-unknown-${w}`, false)
   await audit(p, `profile unknown@${w}`)
   ok(`errors profile@${w}`, p.errors.length === 0, p.errors.join(' | '))
@@ -1171,6 +1172,16 @@ for (const w of [390, 1280]) {
   ok(`custom crew@${w}: Crew stats back link says Back to vvv`, (await p.getByTestId('stats-back').innerText()) === 'Back to vvv' && (await p.getByTestId('stats-back').getAttribute('href')) === '/demo/crew')
   await noSample('crew stats')
   await shot(p, `28-custom-crew-stats-${w}`)
+  // See your profile: vvv's real demo state, not Maya's sample numbers
+  await p.getByRole('link', { name: 'See your profile' }).click(); await nav(p, '**/demo/u/maya')
+  ok(`custom crew@${w}: See your profile shows the vvv creator with zero calls/badges/reveals`, (await p.getByTestId('prof-crew').textContent()) === 'You · vvv' && (await p.locator('h1').innerText()) === 'Maya Thompson' && (await p.getByTestId('prof-calls').innerText()) === '0' && (await p.getByTestId('prof-rate').innerText()) === '–' && (await p.getByTestId('prof-badges').textContent()).includes('0 of 8') && (await p.locator('.badgecell.is-earned').count()) === 0 && await p.getByTestId('prof-norev').isVisible(),
+    `${await p.getByTestId('prof-calls').innerText()} / ${await p.getByTestId('prof-rate').innerText()} / ${await p.getByTestId('prof-badges').innerText()}`)
+  ok(`custom crew@${w}: profile has no sample numbers or reveals, back link goes to vvv`, !/\b12\b|58%|Ten years|Dinner’s on Jake|The Crew Starter/.test(await p.locator('main').innerText()) && (await p.getByTestId('prof-back').innerText()) === 'Back to vvv' && (await p.getByTestId('prof-back').getAttribute('href')) === '/demo/crew')
+  await noSample('profile')
+  await shot(p, `29-profile-new-crew-${w}`)
+  await p.goto(DEMO + '/u/jake'); await p.waitForTimeout(400)
+  ok(`custom crew@${w}: someone not in vvv yet has no profile there`, (await p.getByTestId('prof-missing').innerText()) === 'No one by that name in vvv')
+  await p.goto(DEMO + '/stats'); await p.waitForTimeout(400)
   await p.getByTestId('stats-back').click(); await nav(p, '**/demo/crew')
   ok(`custom crew@${w}: back from stats returns to the vvv crew card`, (await p.locator('.crewcard__name').innerText()) === 'vvv' && (await p.getByTestId('crew-code-pill').innerText()) === code)
   // invite: link, code, QR, Text/WhatsApp all carry vvv + its code
@@ -1218,6 +1229,10 @@ for (const w of [390, 1280]) {
   await p.goto(DEMO + '/stats'); await p.waitForTimeout(400)
   ok(`custom crew@${w}: after invite + reveal, stats shows 5 of 5, 1 opened, the vvv reveal in memories`, (await p.getByTestId('wall-members').innerText()) === '5 of 5' && (await p.getByTestId('wall-opened').innerText()) === '1' && await p.getByTestId('mem-current').isVisible() && (await p.getByTestId('stats-back').innerText()) === 'Back to vvv')
   await noSample('crew stats after reveal')
+  await p.goto(DEMO + '/u/maya'); await p.waitForTimeout(400)
+  ok(`custom crew@${w}: after a reveal, your profile counts it (1 call, Crew Starter, today’s reveal)`, (await p.getByTestId('prof-calls').innerText()) === '1' && (await p.getByTestId('prof-rate').innerText()) === '0%' && (await p.locator('.badgecell.is-earned').count()) === 1 && await p.getByTestId('prof-rev-current').isVisible())
+  await p.goto(DEMO + '/u/jake'); await p.waitForTimeout(400)
+  ok(`custom crew@${w}: invited friend’s profile is fresh in vvv (0 calls)`, (await p.getByTestId('prof-crew').textContent()) === 'vvv' && (await p.getByTestId('prof-calls').innerText()) === '0' && !/Good Sport/.test(await p.locator('main').innerText()))
   ok(`errors custom crew@${w}`, p.errors.length === 0, p.errors.join(' | '))
   await p.context().close()
 }

@@ -4,6 +4,7 @@ import type { BuiltinId, MemberId } from './data'
 import { SHARE_SLUGS } from './data'
 import { custom } from './custom'
 import { firstLock } from './firstlock'
+import { state } from './store'
 
 export type BadgeId = 'oracle' | 'dare' | 'laughed' | 'nightowl' | 'starter' | 'firstlock' | 'maker' | 'reunion' | 'hits' | 'rate' | 'streak'
 export type EarnedBadge = Exclude<BadgeId, 'hits' | 'rate' | 'streak'>
@@ -49,6 +50,16 @@ export function earnedFor(id: MemberId): EarnedBadge[] {
   }
   return BADGES.map((b) => b.id).filter((b) => e.has(b))
 }
+/** A crew you started (or joined by its own link) has no sample history: only what you did this session. */
+export const isNewCrew = () => !!state.crew && state.crewCustom
+export function newCrewEarned(id: MemberId): EarnedBadge[] {
+  if (id !== 'maya') return []
+  const e = new Set<EarnedBadge>(earnedFor('maya').filter((b) => b === 'firstlock' || b === 'maker'))
+  if (state.crew === 'created' && state.invited) e.add('starter')
+  return BADGES.map((b) => b.id).filter((b) => e.has(b))
+}
+/** Your own calls in this session: the main lock plus the 30-second first lock. */
+export const newCrewCalls = (id: MemberId) => (id === 'maya' ? (state.lockedAt ? 1 : 0) + (firstLock.lockedAt ? 1 : 0) : 0)
 export const rate = (p: Profile) => Math.round((p.hits / p.calls) * 100)
 
 export const MEMBER_SLUGS: MemberId[] = ['maya', 'jake', 'chris', 'sam', 'riley']
