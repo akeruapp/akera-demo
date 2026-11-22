@@ -32,7 +32,7 @@ function share() {
   <Screen :photo="t.revealPhoto" kicker="Aketa!" :caption="r.headline" back="/aketa" :step="5">
     <article class="reveal">
       <figure class="reveal__photo">
-        <img :src="t.revealPhoto.src" :alt="t.revealPhoto.alt" />
+        <img :src="t.revealPhoto.src" :alt="t.revealPhoto.alt" :style="t.revealPhoto.focus ? { objectPosition: t.revealPhoto.focus } : undefined" />
         <figcaption class="reveal__stamp"><Sparkle :size="16" /> Aketa!</figcaption>
       </figure>
       <p class="kicker">{{ r.kicker }} · {{ t.metAt.split(' · ').slice(-1)[0] }}</p>

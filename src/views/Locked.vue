@@ -6,11 +6,12 @@ import Avatar from '../components/Avatar.vue'
 import LockGlyph from '../components/LockGlyph.vue'
 import Orbit from '../components/Orbit.vue'
 import Sparkle from '../components/Sparkle.vue'
-import { MEMBERS, member, template } from '../data'
+import { MEMBERS, PARTNER, member, template } from '../data'
 import { state } from '../store'
 
 const router = useRouter()
 const t = computed(() => template(state.templateId!))
+const cond = computed(() => (state.fromPartner && t.value.id === 'run' ? PARTNER.locked : t.value.condition))
 
 const myCallLabel = computed(() => {
   const c = state.myCall ?? ''
@@ -19,7 +20,7 @@ const myCallLabel = computed(() => {
     const [h, k] = c.split('-').map(Number)
     return h === k ? `${h}–${k} draw` : h > k ? `Hawks ${h}–${k}` : `Comets ${k}–${h}`
   }
-  if (t.value.kind === 'note') return 'Your note for Riley'
+  if (t.value.kind === 'note') return t.value.noteLabel ?? 'Your note'
   return c
 })
 
@@ -37,7 +38,7 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
 </script>
 
 <template>
-  <Screen :photo="t.photo" kicker="Locked" :caption="t.condition" back="/lock" :step="4">
+  <Screen :photo="t.photo" kicker="Locked" :caption="cond" back="/lock" :step="4">
     <div class="lockhero">
       <Orbit class="lockhero__orbit" :w="248" :h="88" :at="0.08" :spark="14" />
       <span class="lockhero__lock"><LockGlyph :size="72" /></span>
@@ -59,7 +60,7 @@ const spoken = computed(() => `${Number(parts.value[0])} hours ${Number(parts.va
       <div class="condition__icon" aria-hidden="true"><span class="pulse" /></div>
       <div>
         <h2 id="cond-label" class="card__label">Unlocks when</h2>
-        <p class="condition__text">{{ t.condition }}</p>
+        <p class="condition__text">{{ cond }}</p>
         <p class="condition__status"><span class="dot-live" aria-hidden="true" /> Waiting for the signal</p>
         <p class="muted small">Illustrative partner label for this demo.</p>
       </div>

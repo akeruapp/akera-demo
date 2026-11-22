@@ -29,7 +29,7 @@ withDefaults(defineProps<{
     <div class="screen__main">
       <TopBar :back="back" :step="step" :total="total" />
       <figure v-if="photo && band" class="band">
-        <img :src="photo.src" :alt="photo.alt" />
+        <img :src="photo.src" :alt="photo.alt" :style="photo.focus ? { objectPosition: photo.focus } : undefined" />
       </figure>
       <main class="screen__body" id="main">
         <slot />

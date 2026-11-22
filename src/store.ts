@@ -10,12 +10,13 @@ export interface DemoState {
   lockedAt: number | null
   revealSeen: boolean
   consent: boolean
+  fromPartner: boolean
 }
 
 const KEY = 'akeru.demo.v1'
 
 const fresh = (): DemoState => ({
-  crew: null, crewName: CREW.name, templateId: null, myCall: null, lockedAt: null, revealSeen: false, consent: false,
+  crew: null, crewName: CREW.name, templateId: null, myCall: null, lockedAt: null, revealSeen: false, consent: false, fromPartner: false,
 })
 
 function load(): DemoState {
@@ -25,12 +26,13 @@ function load(): DemoState {
     const v = JSON.parse(raw) as Partial<DemoState>
     const s = fresh()
     if (v.crew === 'created' || v.crew === 'joined') s.crew = v.crew
-    if (v.templateId && ['dinner', 'match', 'run', 'note'].includes(v.templateId)) s.templateId = v.templateId
+    if (v.templateId && ['dinner', 'match', 'run', 'note', 'reunion', 'roadtrip'].includes(v.templateId)) s.templateId = v.templateId
     if (typeof v.crewName === 'string' && v.crewName.trim()) s.crewName = v.crewName.slice(0, 40)
     if (typeof v.myCall === 'string') s.myCall = v.myCall
     if (typeof v.lockedAt === 'number') s.lockedAt = v.lockedAt
     s.revealSeen = v.revealSeen === true
     s.consent = v.consent === true
+    s.fromPartner = v.fromPartner === true
     return s
   } catch {
     return fresh()
@@ -50,7 +52,18 @@ export function pickTemplate(id: TemplateId) {
     state.lockedAt = null
     state.revealSeen = false
     state.consent = false
+    state.fromPartner = false
   }
+}
+
+/** Entry from the partner app: seed the demo crew and the run template, condition set. */
+export function startFromPartner() {
+  if (!state.crew) { state.crew = 'joined'; state.crewName = CREW.name }
+  pickTemplate('run')
+  state.myCall = template('run').defaultCall
+  state.lockedAt = null
+  state.revealSeen = false
+  state.fromPartner = true
 }
 
 export function lockCall(call: string) {

@@ -24,21 +24,34 @@ For the phone view, open the browser dev tools' device toolbar at 390 px wide.
 | --- | --- | --- |
 | 1 Welcome | `/` | Brand moment, start the demo or jump to a shared reveal |
 | 2 Crew | `/crew` | Start a crew (prefilled "Gate C Crew") or join with demo code **C7-GATE** (case and dash optional) |
-| 3 Template | `/templates` | First to land buys dinner (default), Match prediction, Charity run finish time, Sealed table note |
+| 3 Template | `/templates` | First to land buys dinner (default), Match prediction, Charity run finish time, Sealed table note, Reunion time capsule, Road trip: who calls the first stop? |
 | 4 Lock | `/lock` | Maya Thompson makes her call; the other four are already sealed |
 | 5 Locked | `/locked` | Countdown plus an illustrative partner condition, and a secondary **Simulate unlock** demo control |
 | 6 Aketa! | `/aketa` | The reveal animation, held on its end state (instant under `prefers-reduced-motion`) |
 | 7 Reveal card | `/reveal` | Everyone's calls, the result, and the opt-in share prompt |
 | 8 Shared page | `/r/x7k2` | Public reveal card with **Run it with your crew** |
+| Partner example | `/partner/run` | A fictional race-timing app (**Fieldstone Timing**) showing Sam's 10K result and the Akeru button “🔒 Lock a dare with your crew for the next run” |
+| Partner, ready | `/partner/run?aketa=ready` | Same page with the “Your crew’s Aketa is ready” banner, linking to `/r/r10k` |
+| For partners | `/partners` | How a partner connects: one button, one yes/no signal |
 
-Positive by design: roasts are friendly, and the roasted friend holds the share key. On the dinner and match
+Positive by design: roasts are friendly, and the roasted friend holds the share key. On the dinner, match and road trip
 reveals, **Share** stays disabled until the "I'm laughing too" switch is on (in the demo, Maya taps it on
 Jake's or Chris's behalf, and it is labeled as a demo control). No money, no betting language, no shaming.
 
 Shared routes: `/r/x7k2` (dinner, the canned reveal from the deck), plus `/r/m4h2` (match), `/r/r10k` (run)
-and `/r/n5t3` (table note). Direct loads always show the canned reveal; arriving from the flow shows your own call.
+`/r/n5t3` (table note), `/r/c4ps` (reunion time capsule) and `/r/m0ab` (road trip). Direct loads always show the canned reveal; arriving from the flow shows your own call.
+
+### Partner example
+
+`/partner/run` is a mock results page from **Fieldstone Timing**, a fictional race-timing app (not a real
+brand), labeled "Partner example" at the top. Its Akeru button seeds the demo crew (Gate C Crew) and the
+charity run template, so a visitor arriving with no prior state lands on a prefilled `/lock` with the condition
+"Unlocks when everyone finishes". The partner only sends a yes/no signal and never sees what anyone wrote.
 
 ### Demo limitations (deliberate)
+
+- Locking a dare from the partner page uses the charity run template; its reveal is the canned Riverside 10K
+  reveal (50:12), not a separate "next run" result.
 
 - State lives in `sessionStorage`. A refresh mid-flow keeps your place in this tab; a new tab or a deep link
   to a mid-flow step without state sends you back to the start. `/r/*` always works on direct load.
@@ -49,6 +62,14 @@ and `/r/n5t3` (table note). Direct loads always show the canned reveal; arriving
 ## Hosting status
 
 The GitHub repository is **private** and **GitHub Pages is intentionally not enabled**. Nothing is deployed.
+
+## Logo
+
+`src/assets/akeru-mark.svg` is the Akeru mark: a lowercase "a" with a keyhole counter and a four-point
+sparkle, amber on a transparent background (the navy tile is only for icons). It's redrawn as geometric SVG
+from the chosen concept. `public/favicon.svg` is the mark on a navy rounded tile, and
+`public/apple-touch-icon.png` is the lockup with the cream "akeru" wordmark (regenerate with
+`node qa/make-icons.mjs`). The app header uses the mark plus the cream wordmark.
 
 ## Stack
 

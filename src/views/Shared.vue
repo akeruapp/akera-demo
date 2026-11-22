@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Avatar from '../components/Avatar.vue'
 import Orbit from '../components/Orbit.vue'
+import Mark from '../components/Mark.vue'
 import Sparkle from '../components/Sparkle.vue'
 import { CREW, buildReveal, member, template, templateForSlug } from '../data'
 import { resetDemo, state } from '../store'
@@ -28,7 +29,7 @@ function runIt() {
     <Orbit class="shared__orbit shared__orbit--a" :w="520" :h="180" :at="0.1" :spark="22" />
     <Orbit class="shared__orbit shared__orbit--b" :w="420" :h="140" :tilt="-30" :at="0.55" :spark="16" />
     <header class="shared__bar">
-      <span class="wordmark">aketa<span class="amber">!</span></span>
+      <span class="wordmark"><Mark :size="24" /><span>aketa<span class="amber">!</span></span></span>
       <span class="urlpill"><svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/><rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor"/></svg>aketa.app/r/{{ route.params.slug }}</span>
     </header>
 
@@ -37,7 +38,7 @@ function runIt() {
     <main class="shared__main">
       <article class="pubcard">
         <figure class="pubcard__photo">
-          <img :src="t.revealPhoto.src" :alt="t.revealPhoto.alt" />
+          <img :src="t.revealPhoto.src" :alt="t.revealPhoto.alt" :style="t.revealPhoto.focus ? { objectPosition: t.revealPhoto.focus } : undefined" />
           <figcaption class="credit">Photo: {{ t.revealPhoto.credit }} / Pexels</figcaption>
         </figure>
         <div class="pubcard__body">
@@ -46,7 +47,7 @@ function runIt() {
           <p class="muted">{{ crewName }} · {{ t.name }} · {{ t.metAt.split(' · ').slice(-1)[0] }}</p>
           <p class="lede">{{ pub(r.summary) }}</p>
 
-          <ul class="pubcalls" aria-label="Everyone’s calls">
+          <ul class="pubcalls" :class="{ 'pubcalls--notes': t.kind === 'note' }" aria-label="Everyone’s calls">
             <li v-for="row in r.rows" :key="row.by" class="pubcalls__row" :class="{ 'is-hi': row.highlight }">
               <Avatar :id="row.by" :size="32" />
               <span class="pubcalls__who">{{ member(row.by).first }}</span>

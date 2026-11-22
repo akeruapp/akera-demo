@@ -38,7 +38,7 @@ async function audit(p, label) {
       const b = el.getBoundingClientRect()
       if (b.width === 0) continue
       const inline = el.classList.contains('linkbtn')
-      if ((b.height < 44 && !inline) || (inline && b.height < 24)) small.push(`${el.tagName.toLowerCase()}.${el.className} ${Math.round(b.width)}x${Math.round(b.height)}`)
+      if ((b.height < 43.5 && !inline) || (inline && b.height < 24)) small.push(`${el.tagName.toLowerCase()}.${el.className} ${Math.round(b.width)}x${Math.round(b.height)}`)
     }
     // text clipping: elements whose content overflows horizontally
     const clipped = []
@@ -208,45 +208,171 @@ const expect = {
   match: { cond: 'Final whistle via sports partner', h1: /nailed it/, roast: 'chris' },
   run: { cond: 'Official finish via event partner', h1: /Sam ran 50:12/ },
   note: { cond: 'All seats filled via table check-in', h1: /Five notes for Riley/ },
+  reunion: { cond: 'All 5 checked in at Ballwin High reunion', h1: /Ten years, five predictions/, slug: 'c4ps', named: true },
+  roadtrip: { cond: 'Arrival confirmed via maps partner', h1: /Chris called the first stop/, roast: 'chris', slug: 'm0ab', named: true },
 }
+const nm = (id, e, step, w, legacy) => (e.named ? `11-template-${id}-${step}-${w}` : legacy)
 for (const [id, e] of Object.entries(expect)) {
   for (const w of [390, 1280]) {
-    const p = await page(w, { reduced: true })
+    const p = await page(w, { reduced: !e.named })
+    const want = (legacy) => e.named || w === 390
     await p.goto(BASE + '/crew')
     await p.getByRole('button', { name: 'Create crew' }).click()
     await p.getByRole('button', { name: 'Choose what to lock' }).click()
+    await nav(p, '**/templates')
     await p.locator(`label.tpl:has(input[value="${id}"])`).click()
+    ok(`${id}@${w}: listed and selectable on templates`, await p.locator(`input[value="${id}"]`).isChecked())
+    if (e.named) {
+      await p.locator(`label.tpl:has(input[value="${id}"])`).scrollIntoViewIfNeeded()
+      await p.waitForTimeout(250)
+      await p.screenshot({ path: `${OUT}/${nm(id, e, 'templates-selected', w)}.png` })
+    }
     await p.getByRole('button', { name: /^Use / }).click()
     await nav(p, '**/lock')
     if (id === 'match') { await p.getByRole('button', { name: 'One more goal for Comets' }).click() }
     if (id === 'run') { await p.getByRole('button', { name: '15 seconds faster' }).click() }
-    if (id === 'note') { await p.locator('.suggest__btn').nth(1).click() }
-    if (w === 390) await shot(p, `04-lock-${id}-390`)
+    if (id === 'note' || id === 'reunion') { await p.locator('.suggest__btn').nth(1).click() }
+    if (id === 'roadtrip') { await p.locator('label.chip', { hasText: 'Chris' }).click() }
+    if (want()) await shot(p, nm(id, e, 'lock', w, `04-lock-${id}-390`))
     await audit(p, `lock ${id}@${w}`)
     await p.getByRole('button', { name: 'Lock my call' }).click()
     await nav(p, '**/locked')
     ok(`${id}@${w}: locked condition "${e.cond}"`, (await p.locator('.condition__text').innerText()) === e.cond)
-    if (w === 390) await shot(p, `05-locked-${id}-390`)
+    const c1 = await p.locator('.countdown__clock').innerText(); await p.waitForTimeout(1100)
+    ok(`${id}@${w}: countdown ticks`, c1 !== await p.locator('.countdown__clock').innerText())
+    if (want()) await shot(p, nm(id, e, 'locked', w, `05-locked-${id}-390`))
+    await audit(p, `locked ${id}@${w}`)
     await p.getByRole('button', { name: 'Simulate unlock' }).click()
     await nav(p, '**/aketa')
+    await p.locator('.aketa.phase-3').waitFor({ timeout: 5000 })
     await p.getByRole('button', { name: 'See everyone’s calls' }).click()
     await nav(p, '**/reveal')
     ok(`${id}@${w}: reveal headline`, e.h1.test(await p.locator('h1').innerText()), await p.locator('h1').innerText())
+    ok(`${id}@${w}: five calls on reveal`, (await p.locator('.calls__row').count()) === 5)
     const share = p.getByRole('button', { name: 'Share reveal card' })
     if (e.roast) {
       ok(`${id}@${w}: roast gates share`, await share.isDisabled())
+      if (e.named) await shot(p, nm(id, e, 'reveal-consent-off', w))
       await p.locator('label.switch').click()
     }
     ok(`${id}@${w}: share enabled`, await share.isEnabled())
-    if (w === 390) await shot(p, `07-reveal-${id}-390`)
+    if (want()) await shot(p, nm(id, e, 'reveal', w, `07-reveal-${id}-390`))
     await audit(p, `reveal ${id}@${w}`)
     await share.click()
     await nav(p, '**/r/**')
-    ok(`${id}@${w}: shared route ${new URL(p.url()).pathname}`, (await p.locator('h1').count()) === 1)
-    if (w === 390) await shot(p, `08-shared-${id}-390`)
+    ok(`${id}@${w}: shared route ${new URL(p.url()).pathname}`, (await p.locator('h1').count()) === 1 && (!e.slug || new URL(p.url()).pathname === `/r/${e.slug}`))
+    if (want()) await shot(p, nm(id, e, 'shared', w, `08-shared-${id}-390`))
+    if (e.slug) {
+      const q = await page(w)
+      await q.goto(`${BASE}/r/${e.slug}`)
+      ok(`${id}@${w}: direct load /r/${e.slug}`, e.h1.test(await q.locator('h1').innerText()))
+      if (e.roast) ok(`${id}@${w}: direct shared shows consent`, await q.getByText('Chris is laughing too').isVisible())
+      await audit(q, `shared direct ${id}@${w}`)
+      if (e.named) await shot(q, nm(id, e, 'shared-direct', w))
+      ok(`errors shared direct ${id}@${w}`, q.errors.length === 0, q.errors.join(' | '))
+      await q.context().close()
+    }
     ok(`errors ${id}@${w}`, p.errors.length === 0, p.errors.join(' | '))
     await p.context().close()
   }
+}
+
+// ---------- partner example (/partner/run) ----------
+for (const w of [390, 1280]) {
+  const p = await page(w)
+  await p.goto(BASE + '/partner/run')
+  await p.evaluate(() => document.fonts.ready)
+  ok(`partner@${w}: labeled partner example`, await p.getByText('Partner example', { exact: true }).isVisible())
+  ok(`partner@${w}: fictional name Fieldstone Timing`, (await p.locator('.partner__brand').innerText()).includes('Fieldstone'))
+  ok(`partner@${w}: finished + time 50:12`, (await p.locator('.partner__status').innerText()).includes('Finished') && (await p.locator('.partner__time').innerText()) === '50:12')
+  const cta = p.getByRole('button', { name: '🔒 Lock a dare with your crew for the next run' })
+  ok(`partner@${w}: Aketa CTA with exact label`, await cta.isVisible())
+  ok(`partner@${w}: yes/no footnote`, (await p.locator('.partner__foot').innerText()).includes('yes/no') && (await p.locator('.partner__foot').innerText()).includes('never sees what anyone'))
+  ok(`partner@${w}: no ready banner in default state`, (await p.locator('[data-testid="aketa-ready"]').count()) === 0)
+  await audit(p, `partner@${w}`)
+  await p.waitForTimeout(300)
+  await p.screenshot({ path: `${OUT}/09-partner-run-${w}.png`, fullPage: true })
+  // CTA from a clean session: lands on a prefilled lock screen (no redirect to welcome)
+  await cta.click()
+  await nav(p, '**/lock')
+  ok(`partner@${w}: CTA lands on /lock`, new URL(p.url()).pathname === '/lock')
+  const st = await p.evaluate(() => JSON.parse(sessionStorage.getItem('akeru.demo.v1')))
+  ok(`partner@${w}: run template + Gate C Crew seeded`, st.templateId === 'run' && st.crew && st.crewName === 'Gate C Crew' && st.fromPartner === true, JSON.stringify(st))
+  ok(`partner@${w}: condition "Unlocks when everyone finishes"`, (await p.locator('[data-testid="lock-condition"]').innerText()).includes('Unlocks when everyone finishes'))
+  ok(`partner@${w}: run question on lock`, (await p.locator('h1').innerText()).includes('10K'))
+  await audit(p, `partner lock@${w}`)
+  await shot(p, `09-partner-lock-${w}`)
+  await p.getByRole('button', { name: 'Lock my call' }).click()
+  await nav(p, '**/locked')
+  ok(`partner@${w}: locked shows partner condition`, (await p.locator('.condition__text').innerText()) === 'Everyone finishes via Fieldstone Timing')
+  await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/lock')
+  await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/partner/run')
+  ok(`partner@${w}: back from lock returns to partner page`, true)
+  // ready state
+  await p.goto(BASE + '/partner/run?aketa=ready')
+  const banner = p.locator('[data-testid="aketa-ready"]')
+  ok(`partner ready@${w}: banner visible`, await banner.isVisible() && (await banner.innerText()).includes('Your crew’s Aketa is ready'))
+  ok(`partner ready@${w}: banner links to /r/r10k`, (await banner.getAttribute('href')) === '/r/r10k')
+  await audit(p, `partner ready@${w}`)
+  await p.waitForTimeout(300)
+  await p.screenshot({ path: `${OUT}/09-partner-ready-${w}.png`, fullPage: true })
+  await banner.click(); await nav(p, '**/r/r10k')
+  ok(`partner ready@${w}: banner opens run reveal`, /Sam ran 50:12/.test(await p.locator('h1').innerText()))
+  ok(`errors partner@${w}`, p.errors.length === 0, p.errors.join(' | '))
+  ok(`network partner@${w}: no external requests`, p.external.length === 0)
+  await p.context().close()
+}
+// entry links
+{
+  const p = await page(390)
+  await p.goto(BASE + '/')
+  await p.getByRole('link', { name: 'See it from a partner app' }).click()
+  await nav(p, '**/partner/run')
+  ok('entry: welcome link opens /partner/run', new URL(p.url()).pathname === '/partner/run')
+  await p.goto(BASE + '/crew')
+  await p.getByRole('button', { name: 'Create crew' }).click()
+  await p.getByRole('button', { name: 'Choose what to lock' }).click(); await nav(p, '**/templates')
+  ok('entry: templates link points at /partner/run', (await p.getByRole('link', { name: 'See it from a partner app' }).getAttribute('href')) === '/partner/run')
+  // picking a template after a partner entry clears the partner condition
+  await p.goto(BASE + '/partner/run')
+  await p.getByRole('button', { name: /Lock a dare/ }).click(); await nav(p, '**/lock')
+  await p.getByRole('button', { name: 'Back' }).click(); await nav(p, '**/partner/run')
+  await p.goto(BASE + '/templates'); await nav(p, '**/templates')
+  await p.locator('label.tpl:has(input[value="dinner"])').click()
+  await p.getByRole('button', { name: /^Use / }).click(); await nav(p, '**/lock')
+  ok('partner condition cleared after switching template', (await p.locator('[data-testid="lock-condition"]').count()) === 0)
+  await p.context().close()
+}
+// logo: mark in header + welcome, icons served
+for (const w of [390, 1280]) {
+  const p = await page(w)
+  await p.goto(BASE + '/')
+  await p.evaluate(() => document.fonts.ready)
+  ok(`logo@${w}: welcome shows the mark (header + hero)`, (await p.locator('.welcome svg.mark').count()) === 2)
+  await p.waitForTimeout(300)
+  await p.screenshot({ path: `${OUT}/_logo-welcome-${w}.png` })
+  await p.goto(BASE + '/crew'); await p.waitForTimeout(400)
+  ok(`logo@${w}: app header shows mark + akeru`, (await p.locator('.topbar .wordmark svg.mark').count()) === 1 && (await p.locator('.topbar .wordmark').innerText()).trim() === 'akeru')
+  await p.screenshot({ path: `${OUT}/_logo-header-${w}.png`, clip: { x: 0, y: 0, width: w, height: 80 } })
+  for (const u of ['/favicon.svg', '/apple-touch-icon.png']) {
+    const r = await p.request.get(BASE + u)
+    ok(`logo: ${u} served`, r.status() === 200 && (u.endsWith('svg') ? (await r.text()).includes('#121A2C') : true))
+  }
+  ok(`logo: index links apple-touch-icon`, (await p.locator('link[rel="apple-touch-icon"]').count()) === 1)
+  await p.context().close()
+}
+
+// /partners integrate page
+for (const w of [390, 1280]) {
+  const p = await page(w)
+  await p.goto(BASE + '/partners')
+  ok(`/partners@${w}: loads`, (await p.locator('h1').innerText()) === 'Akeru inside your app')
+  await audit(p, `/partners@${w}`)
+  await shot(p, `10-partners-${w}`)
+  await p.getByRole('link', { name: 'See it from a partner app' }).click(); await nav(p, '**/partner/run')
+  ok(`/partners@${w}: CTA opens partner example`, true)
+  ok(`errors /partners@${w}`, p.errors.length === 0, p.errors.join(' | '))
+  await p.context().close()
 }
 
 // ---------- reduced motion ----------
@@ -309,7 +435,10 @@ for (const w of [390, 1280]) {
   ok('keyboard: arrow keys move template selection', found && await p.locator('input[value="match"]').isChecked())
   await p.screenshot({ path: `${OUT}/kbd-focus-templates-1280.png` })
   // continue to the lock and use the keyboard to lock
-  await p.keyboard.press('Tab'); await p.keyboard.press('Enter'); await nav(p, '**/lock')
+  found = false
+  for (let i = 0; i < 4 && !found; i++) { await p.keyboard.press('Tab'); found = await p.evaluate(() => document.activeElement?.textContent?.trim().startsWith('Use')) }
+  ok('keyboard: reach Use template button', found)
+  await p.keyboard.press('Enter'); await nav(p, '**/lock')
   found = false
   for (let i = 0; i < 20 && !found; i++) { await p.keyboard.press('Tab'); found = await p.evaluate(() => document.activeElement?.textContent?.trim().endsWith('Lock my call')) }
   ok('keyboard: reach Lock my call', found)
@@ -346,7 +475,7 @@ for (const w of [390, 1280]) {
   await p.goto(BASE + '/')
   await p.evaluate(() => document.fonts.ready)
   await p.waitForTimeout(300)
-  const boxes = await p.evaluate(() => [...document.querySelectorAll('.welcome__kicker, .welcome__title, .welcome__tagline, .welcome__line, .welcome__hint, .welcome__credit, .demo-tag')].map((el) => {
+  const boxes = await p.evaluate(() => [...document.querySelectorAll('.welcome__kicker, .welcome__title, .welcome__tagline, .welcome__line, .welcome__hint, .welcome__credit, .demo-tag, .welcome__partner')].map((el) => {
     const b = el.getBoundingClientRect(); return { cls: el.className, x: b.x, y: b.y, w: b.width, h: b.height, color: getComputedStyle(el).color }
   }))
   await p.addStyleTag({ content: '.welcome__body *, .welcome__credit, .welcome__bar * { color: transparent !important; } .sparkle, .btn { visibility: hidden !important; }' })

@@ -28,11 +28,12 @@ function choose(id: TemplateId) { pickTemplate(id) }
         <span class="tpl__text">
           <span class="tpl__name">{{ t.name }}</span>
           <span class="tpl__line">{{ t.tagline }}</span>
-          <span class="tpl__cond"><span class="dot-live" aria-hidden="true" />Opens on: {{ t.condition.replace(/ via .*/, '').toLowerCase() }}</span>
+          <span class="tpl__cond"><span class="dot-live" aria-hidden="true" />Opens on: {{ t.opensOn ?? t.condition.replace(/ via .*/, '').toLowerCase() }}</span>
         </span>
         <span class="tpl__check" aria-hidden="true"><Sparkle :size="16" color="var(--ink)" /></span>
       </label>
     </fieldset>
+    <p class="tpls__partner"><RouterLink to="/partner/run">See it from a partner app</RouterLink></p>
 
     <template #foot>
       <button type="button" class="btn btn--primary btn--block" @click="router.push('/lock')">Use “{{ current.name }}”</button>

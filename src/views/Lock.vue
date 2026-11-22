@@ -4,11 +4,12 @@ import { useRouter } from 'vue-router'
 import Screen from '../components/Screen.vue'
 import Avatar from '../components/Avatar.vue'
 import LockGlyph from '../components/LockGlyph.vue'
-import { NOTE_SUGGESTIONS, member, parseTime, template } from '../data'
+import { NOTE_SUGGESTIONS, PARTNER, member, parseTime, template } from '../data'
 import { lockCall, prefersReducedMotion, state } from '../store'
 
 const router = useRouter()
 const t = computed(() => template(state.templateId!))
+const partner = computed(() => state.fromPartner && t.value.id === 'run')
 const others = computed(() => t.value.others)
 
 // local draft per kind
@@ -42,10 +43,14 @@ function seal() {
 </script>
 
 <template>
-  <Screen :photo="t.photo" band kicker="Lock your call" :caption="t.name" back="/templates" :step="3">
+  <Screen :photo="t.photo" band kicker="Lock your call" :caption="partner ? PARTNER.condition : t.name" :back="partner ? '/partner/run' : '/templates'" :step="3">
     <p class="kicker">Step 3 · {{ t.name }}</p>
-    <h1 class="title">{{ t.question }}</h1>
-    <p class="lede">{{ t.hint }}</p>
+    <h1 class="title">{{ partner ? PARTNER.question : t.question }}</h1>
+    <p class="lede">{{ partner ? PARTNER.hint : t.hint }}</p>
+    <p v-if="partner" class="condchip" data-testid="lock-condition">
+      <span class="dot-live" aria-hidden="true" />
+      <span><span class="condchip__k">Condition set</span> {{ PARTNER.condition }}</span>
+    </p>
 
     <section class="card stack" aria-labelledby="your-call">
       <h2 id="your-call" class="card__label">Your call · Maya</h2>
@@ -84,12 +89,12 @@ function seal() {
 
       <div v-else class="stack">
         <label class="field">
-          <span class="visually-hidden">Your note for Riley</span>
+          <span class="visually-hidden">{{ t.noteLabel }}</span>
           <textarea v-model="note" class="input textarea" rows="4" maxlength="180" aria-describedby="note-count" />
         </label>
-        <p id="note-count" class="field__msg">{{ note.length }} / 180 · sealed until every seat is filled</p>
+        <p id="note-count" class="field__msg">{{ note.length }} / 180 · {{ t.sealedUntil }}</p>
         <div class="suggest" role="group" aria-label="Note ideas">
-          <button v-for="s in NOTE_SUGGESTIONS" :key="s" type="button" class="suggest__btn" @click="note = s">{{ s }}</button>
+          <button v-for="s in (t.suggestions ?? NOTE_SUGGESTIONS)" :key="s" type="button" class="suggest__btn" @click="note = s">{{ s }}</button>
         </div>
       </div>
     </section>

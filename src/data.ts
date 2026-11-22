@@ -26,15 +26,17 @@ export const CREW = {
   blurb: 'Five friends, four cities, one long weekend in Denver.',
 }
 
-export type TemplateId = 'dinner' | 'match' | 'run' | 'note'
+export type TemplateId = 'dinner' | 'match' | 'run' | 'note' | 'reunion' | 'roadtrip'
 
 export interface Photo {
   src: string
   alt: string
   credit: string
+  focus?: string // object-position for tight crops
 }
 
-const P = (id: string, alt: string, credit: string): Photo => ({
+const P = (id: string, alt: string, credit: string, focus?: string): Photo => ({
+  focus,
   src: `/photos/pexels-${id}.jpg`,
   alt,
   credit,
@@ -49,7 +51,7 @@ export const PHOTOS = {
   finish: P('35261923', 'A runner celebrating with arms raised at a city race finish', 'Cristian Camilo Estrada'),
   finish2: P('17979347', 'A runner with arms raised at an outdoor finish', 'Pexels LATAM'),
   key: P('40150787', 'An antique key in a wooden door lock', 'Waskyria Miranda'),
-  van: P('5329529', 'A travel crew waving from the roof of a red van', 'cottonbro studio'),
+  van: P('5329529', 'A travel crew waving from the roof of a red van', 'cottonbro studio', 'center 58%'),
   run: P('34089572', 'A volunteer handing water to a runner during a city race', 'K'),
 }
 
@@ -78,6 +80,10 @@ export interface Template {
   others: CrewCall[]
   defaultCall: string
   picks?: { value: string; label: string }[]
+  opensOn?: string // short form for the template list
+  noteLabel?: string // note kind: what the note is
+  sealedUntil?: string // note kind: helper text under the textarea
+  suggestions?: string[] // note kind: one-tap ideas
 }
 
 export const TEMPLATES: Template[] = [
@@ -165,6 +171,8 @@ export const TEMPLATES: Template[] = [
     photo: PHOTOS.key,
     revealPhoto: PHOTOS.dinnerLaugh,
     defaultCall: 'Riley, you made this city feel like home my first year here. Happy birthday.',
+    noteLabel: 'Your note for Riley',
+    sealedUntil: 'sealed until every seat is filled',
     others: [
       { by: 'jake', call: 'Thirty looks good on you. Thirty-one will look even better when you finally return my jacket.' },
       { by: 'chris', call: 'You are the reason this crew has a group chat. Thank you for every plan you made happen.' },
@@ -172,7 +180,73 @@ export const TEMPLATES: Template[] = [
       { by: 'riley', call: 'Sealed by Riley: “I knew you’d all show up.”' },
     ],
   },
+  {
+    id: 'reunion',
+    name: 'Reunion time capsule',
+    tagline: 'Seal what you think everyone will be up to. It opens when the whole crew walks into the reunion.',
+    kind: 'note',
+    question: 'Where will we all be?',
+    hint: 'Ballwin High, ten years on. Seal a prediction or a note about your old classmates. It opens when all five of you check in.',
+    condition: 'All 5 checked in at Ballwin High reunion',
+    opensOn: 'everyone checks in at the reunion',
+    waitingFor: 'Reunion doors open in',
+    countdownSec: 3 * 3600 + 41 * 60 + 9,
+    metAt: 'All 5 checked in at Ballwin High reunion · 7:15 PM',
+    photo: PHOTOS.couch,
+    revealPhoto: PHOTOS.dinnerLaugh,
+    defaultCall: 'Riley is the one who organized this reunion. Of course Riley organized this reunion.',
+    noteLabel: 'Your time capsule note',
+    sealedUntil: 'sealed until all five check in',
+    suggestions: [
+      'Riley is the one who organized this reunion. Of course Riley organized this reunion.',
+      'Chris still knows everyone’s coffee order. Probably runs the best café in town.',
+      'Ten years from now we’ll still be in the same group chat. Calling it.',
+    ],
+    others: [
+      { by: 'jake', call: 'Sam runs marathons now and still talks everyone into “just one more mile.”' },
+      { by: 'chris', call: 'Maya lives somewhere with mountains and sends the best postcards.' },
+      { by: 'sam', call: 'Jake finally learned to cook. Tacos, apparently. Lots of tacos.' },
+      { by: 'riley', call: 'Chris is the one we all call for advice. Same as junior year.' },
+    ],
+  },
+  {
+    id: 'roadtrip',
+    name: 'Road trip: who calls the first stop?',
+    tagline: 'Call who asks to pull over first. It opens when the crew rolls into town.',
+    kind: 'pick',
+    question: 'Who calls the first stop?',
+    hint: 'Denver to Moab, one van, five friends. Whoever asks to pull over first gets named on the card.',
+    condition: 'Arrival confirmed via maps partner',
+    opensOn: 'arrival in Moab',
+    waitingFor: 'ETA to Moab',
+    countdownSec: 5 * 3600 + 48 * 60 + 20,
+    metAt: 'Arrived in Moab · 4:26 PM',
+    photo: PHOTOS.van,
+    revealPhoto: PHOTOS.van,
+    defaultCall: 'chris',
+    picks: [
+      { value: 'jake', label: 'Jake' },
+      { value: 'chris', label: 'Chris' },
+      { value: 'sam', label: 'Sam' },
+      { value: 'riley', label: 'Riley' },
+      { value: 'maya', label: 'Me' },
+    ],
+    others: [
+      { by: 'jake', call: 'Chris', aside: 'Snack emergency by mile 20. Guaranteed.' },
+      { by: 'chris', call: 'Riley', aside: 'She will want every scenic overlook.' },
+      { by: 'sam', call: 'Jake', aside: 'Gas-station jerky is his love language.' },
+      { by: 'riley', call: 'Sam', aside: 'Hydration is a lifestyle.' },
+    ],
+  },
 ]
+
+export const PARTNER = {
+  name: 'Fieldstone Timing',
+  condition: 'Unlocks when everyone finishes',
+  question: 'Sam’s next 10K finish time?',
+  hint: 'Locked from Fieldstone Timing for the crew’s next run. It opens when everyone running has crossed the line.',
+  locked: 'Everyone finishes via Fieldstone Timing',
+}
 
 export const template = (id: TemplateId): Template => TEMPLATES.find((t) => t.id === id)!
 
@@ -288,6 +362,39 @@ export function buildReveal(t: Template, myCall: string): Reveal {
       rows,
     }
   }
+  if (t.id === 'roadtrip') {
+    const pickName = myCall === 'maya' ? 'Me' : member(myCall as MemberId).first
+    const calledIt = myCall === 'chris'
+    return {
+      kicker: 'Rolled into Moab',
+      headline: 'Chris called the first stop',
+      summary: 'Mile 12, a gas station outside Grand Junction, and a “snack emergency.” '
+        + (calledIt ? 'You and Jake saw it coming.' : `Jake saw it coming. You picked ${pickName}.`),
+      rows: [
+        { by: 'maya', call: pickName, badge: calledIt ? 'Called it' : undefined, highlight: calledIt },
+        ...t.others.map((o) => ({
+          by: o.by, call: o.call, aside: `“${o.aside}”`,
+          badge: o.call === 'Chris' ? 'Called it' : undefined, highlight: o.call === 'Chris',
+        })),
+      ],
+      roast: {
+        target: 'chris',
+        text: 'Chris swore he’d make it to Moab without a single stop. He asked to pull over at mile 12 for a “snack emergency.”',
+        consequence: 'Chris is on playlist duty for the drive home.',
+      },
+    }
+  }
+  if (t.id === 'reunion') {
+    return {
+      kicker: 'Everyone’s here',
+      headline: 'Ten years, five predictions',
+      summary: 'Sealed before the reunion, opened at Ballwin High. Three came true, and yes, Riley really did organize the whole night.',
+      rows: [
+        { by: 'maya', call: myCall.trim() || t.defaultCall },
+        ...t.others.map((o) => ({ by: o.by, call: o.call })),
+      ],
+    }
+  }
   // note
   const rows: RevealRow[] = [
     { by: 'maya', call: myCall.trim() || NOTE_SUGGESTIONS[0] },
@@ -307,6 +414,8 @@ export const SHARE_SLUGS: Record<TemplateId, string> = {
   match: 'm4h2',
   run: 'r10k',
   note: 'n5t3',
+  reunion: 'c4ps',
+  roadtrip: 'm0ab',
 }
 
 export const templateForSlug = (slug: string): TemplateId | null =>

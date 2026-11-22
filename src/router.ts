@@ -8,6 +8,8 @@ import Locked from './views/Locked.vue'
 import Reveal from './views/Reveal.vue'
 import RevealCard from './views/RevealCard.vue'
 import Shared from './views/Shared.vue'
+import PartnerRun from './views/PartnerRun.vue'
+import Partners from './views/Partners.vue'
 
 type Need = 'crew' | 'template' | 'locked' | 'revealed'
 
@@ -26,6 +28,8 @@ export const router = createRouter({
     { path: '/aketa', name: 'aketa', component: Reveal, meta: { needs: 'locked', title: 'Aketa! · Akeru' } },
     { path: '/reveal', name: 'reveal', component: RevealCard, meta: { needs: 'revealed', title: 'The reveal · Akeru' } },
     { path: '/r/:slug', name: 'shared', component: Shared, meta: { title: 'Aketa! Dinner’s on Jake · aketa.app' } },
+    { path: '/partner/run', name: 'partner-run', component: PartnerRun, meta: { title: 'Sam Bennett · Riverside 10K · Fieldstone Timing (partner example)' } },
+    { path: '/partners', name: 'partners', component: Partners, meta: { title: 'Akeru for partners · Akeru' } },
     { path: '/:rest(.*)*', redirect: '/' },
   ],
   scrollBehavior: () => ({ top: 0 }),
